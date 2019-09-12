@@ -21,13 +21,9 @@
 #include "base_op.cuh"
 using namespace std;
 
-
 #ifndef _HASH_GLOBLE_CUH
 #define  _HASH_GLOBLE_CUH
-//extern template class base_op<int>;
-
-//extern template class base_op<int>;
-//extern template class base_op<float>;
+//#define NDEBUG 
 
 template<class vlaueT, template<class vlaueT> typename classobject>
 //template<class vlaueT, typename classobject = base_op<vlaueT>>
@@ -47,6 +43,13 @@ public:
 		{
 			std::cout << e.first << " is " << e.second << std::endl;
 		}
+	}
+
+	vector<string> allKeys(){
+		vector<string> result;
+		for (const auto& e : this->un_map)
+			result.push_back(e.first);
+		return result;
 	}
 
 	bool if_find(string key) {

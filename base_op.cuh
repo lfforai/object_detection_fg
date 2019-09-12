@@ -19,10 +19,18 @@
 #include <helper_cuda.h>       // helper for CUDA Error handling and initialization
 #include <helper_string.h>  // helper for string parsing
 #include "hash_globle.cuh"
+#include <assert.h>
+#include <mutex>
+#include <ctime> 
+#include "test_tool.h"
+
+#include <windows.h>
+#include <wincrypt.h>
 using namespace std;
 
 #ifndef _BASE_OP_CUH
 #define _BASE_OP_CUH
+
 
 template<class T>
 struct constant{
@@ -123,8 +131,92 @@ struct y_dy_son{
 template<class T>
 class base_op{
  private:
-	 
+	 int randEx() //real random
+	 {
+		 LARGE_INTEGER seed;
+		 QueryPerformanceFrequency(&seed);
+		 QueryPerformanceCounter(&seed);
+		 srand(seed.QuadPart);
+
+		 return rand();
+	 }
+
+	inline void name_of_op_is_repeat() {
+		 bool op_name_is_repeat = this->globle_graph->if_find(name_of_op);
+		 assert(op_name_is_repeat == false);
+	 };
+
+	//reload the backward_function,make sure last of the function must be backward_over = 1
+	void backward_function() {
+		float secs = (float)(randEx()%5);      //定义浮点型变量secs
+		clock_t delay;  //定义clock_t类型的变量，表示延时时间
+		delay = secs * CLOCKS_PER_SEC;  //delay赋值为secs 乘以 CLOCKS_PER_SEC值，将输入的秒数转化系统的时间
+			clock_t start = clock();    //定义clock_t类型变量start，并赋值为当前系统的时间
+		//cout << this->name_of_op << " is backwarding now......" << endl;
+		while (clock() - start < delay);  // 如果当前时间减去上一刻的系统时间小于延时的系统时间，则执行循环等待，否则跳出循                                                                          环
+		backward_over = 1;
+		cout << this->name_of_op << endl;
+	
+	}
+
+	//reload the forward_function,make sure last of the function must be forward_over = 1
+	void forward_function() {
+		float secs = (float)(randEx()%5);;      //定义浮点型变量secs
+		clock_t delay;  //定义clock_t类型的变量，表示延时时间
+		delay = secs * CLOCKS_PER_SEC;   //delay赋值为secs 乘以 CLOCKS_PER_SEC值，将输入的秒数转化系统的时间
+		clock_t start = clock();    //定义clock_t类型变量start，并赋值为当前系统的时间
+	    //cout << this->name_of_op << " is forwarding now......" << endl;
+		while (clock() - start < delay);  // 如果当前时间减去上一刻的系统时间小于延时的系统时间，则执行循环等待，否则跳出循                                                                          环
+		forward_over = 1;
+		cout << this->name_of_op<< endl;
+	}
+
+	//-1:father not ready,1:father not ready
+	inline int if_fathers_ready_forward() {
+		int result = 1;
+		if (this->fathers.empty())
+		{
+			return result;
+		}
+		else {
+			for (typename vector<base_op<T>*>::const_iterator iter = this->fathers.cbegin(); iter != this->fathers.cend(); iter++)
+			{
+				if ((*iter)->forward_over != 1)
+				{
+					result = -1;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	//-1:sons not ready,1:sons not ready
+	inline int if_sons_ready_backward() {
+		int result = 1;
+		if (this->sons.empty())
+		{
+			return result;
+		}
+		else {
+			//must have e tpyename
+			for (typename vector<base_op<T>*>::const_iterator iter = this->sons.cbegin(); iter != this->sons.cend(); iter++)
+			{
+				if ((*iter)->backward_over != 1)
+				{
+					result = -1;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
  public:
+	 bool input_op_eq_const=false;
+
+	 mutex mtx;//互斥量
+
 	 string name_of_op; //mast be unique;
 
 	//N input op of fathers has  N  x_dy_father<T>[0]....x_dy_father<T>[N-1] parameters 
@@ -139,92 +231,97 @@ class base_op{
 	//constant<T>
 	constant<T>* constant_N;
 
-	graph<T, base_op>* globle_graph;
+	graph<T, base_op>* globle_graph;//this op belong to the globle_graph
 
 	//---------------------------
 	std::vector<base_op<T>*> fathers;//up ops
 	std::vector<base_op<T>*> sons;//down ops
 	
-	int fathers_num = 2; //number of the input ops=N
+	int fathers_num = 0; //number of the input ops=N
 	int sons_num = 0; //number of the input ops=N
 
-	//std::atomic_int forward_over(0);//if this object's all father are all ready(fathers->forward_condition==1),running this forward
-	//std::atomic_int backward_over(0);//if this object's all son are all ready(sons->backward_condition==1),running this backward
-	
-	int forward_over = 0;
-	int backward_over = 0;
-	
-   inline bool if_forward_start() {
-		bool result = true;
-		for (typename vector<base_op<T>*>::const_iterator iter = this->fathers.cbegin(); iter != this->fathers.cend(); iter++)
-			{
-				if ((*iter)->forward_over != 1)
-				{
-					result = false;
-					break;
-				}
-			}
+	//thread safe
+    std::atomic<int> forward_over=0;// current op finish forward 
+	std::atomic<int> backward_over=0;//current op finish backward 
+	std::atomic<bool> is_forwarding = false;//if now thread is forwording now
+	std::atomic<bool> is_backwarding = false;//if now thread is backwording now
+    
+	//make sure is_forwarding is charged for every threads
+	// return 1:can run, 0:is_forwarding or be finished, -1:wait for son ready
+	int if_forward_start_run(){
+		int result = 0; 
+		if(forward_over == 1 || is_forwarding == true)
+           return 0;//be ready to remove the op 
+		//one thread  pay attention to  the op, other thread may remove the op from its vector
+		if(mtx.try_lock()) 
+		  {	result = if_fathers_ready_forward();
+			if (result == 1)
+				is_forwarding = true;
+			mtx.unlock();
+		  }
 		return result;
 	}
 
-	inline bool if_backward_start() {
-		bool result = true;
-		//must have e tpyename
-		for (typename vector<base_op<T>*>::const_iterator iter = this->sons.cbegin(); iter != this->sons.cend(); iter++)
-		{
-			if ((*iter)->backward_over!= 1)
-			{
-				result = false;
-				break;
-			}	   
+	//make sure is_backwarding is charged for every threads
+	// return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
+	int if_backward_start_run() {
+		int result = 0;
+		if (backward_over == 1 || is_backwarding == true)
+			return result;//be ready to remove the op 
+		//one thread  pay attention to  the op, other thread may remove the op from its vector
+		if(mtx.try_lock())
+		{	
+			result = if_sons_ready_backward();
+			if (result == 1)
+				is_backwarding = true;
+			mtx.unlock();
 		}
 		return result;
 	}
-	
-	//reload the backward_function,make sure last of the function must be backward_over = 1
-	virtual void backward_function(){
-
-		backward_over = 1;
-	}
-
-   //reload the forward_function,make sure last of the function must be forward_over = 1
-   virtual void forward_function(){
-	   
-	   forward_over = 1;
-	}
-
+    
 	//run forward mark=0,else mark=1 run backward
 	void ward_run(int mark) {
-		//if(mark == 0) {
-		//  
-		//}
-		//else {
-		//
-		//}
+		if(mark == 0) {
+			forward_function();
+		}
+		else {
+			backward_function();
+	    }
 	}
 
 	base_op(constant<T>* constant_N_o, graph<T, base_op>* globle_graph_o,string name_o)
 		:name_of_op(name_o),constant_N(constant_N_o),globle_graph(globle_graph_o)
 	{   //create op on grap
+		name_of_op_is_repeat();
 		this->globle_graph->insert_v(this->name_of_op, this);
+		this->input_op_eq_const = true;//if this op is tansported from the constant,backward no need to start! 
 	};
 
 	//parameter=w_dw_o,constant=constant_o;
 	base_op(base_op<T>* op, constant<T>* constant_N_o, graph<T, base_op>* globle_graph_o, string name_o) :
 		name_of_op(name_o), constant_N(constant_N_o),globle_graph(globle_graph_o)
 	{   //create op on graph
+		name_of_op_is_repeat();
 		this->fathers.push_back(op);
+		this->fathers_num = 1;
+
 		op->sons.push_back(this);
 		op->sons_num += 1;
+
 		this->globle_graph->insert_v(this->name_of_op, this);
+		
 	};
 
 	//parameter=w_dw_o,constant=constant_o;
 	base_op(base_op<T>* op1,base_op<T>* op2,constant<T>* constant_N_o,graph<T, base_op>* globle_graph_o,string name_o):
 		name_of_op(name_o),constant_N(constant_N_o),globle_graph(globle_graph_o)
 	{   //create op on graph
- 	    this->fathers.push_back(op1);
+		name_of_op_is_repeat();
+
+		this->fathers.push_back(op1);
 		this->fathers.push_back(op2);
+		this->fathers_num = 2;
+		
 		op1->sons.push_back(this);
 		op1->sons_num += 1;
 		op2->sons.push_back(this);
