@@ -18,119 +18,30 @@
 #include <atomic>
 #include <helper_cuda.h>       // helper for CUDA Error handling and initialization
 #include <helper_string.h>  // helper for string parsing
-#include "hash_globle.cuh"
+#include "hash_global.cuh"
 #include <assert.h>
 #include <mutex>
 #include <ctime> 
 #include "test_tool.h"
+#include "constant_class.cuh"
+#include "weigh_class.cuh"
 
 #include <windows.h>
 #include <wincrypt.h>
+#include "stdarg.h"
+#include "gpumathtool.cuh"
+
+//#include "fp16_dev.h"
+
 using namespace std;
 
 #ifndef _BASE_OP_CUH
 #define _BASE_OP_CUH
 
-
-template<class T>
-struct constant{
-	//input from father 
-	T*  x;//forward input
-	int* x_stride;
-	int  x_dim_num;//length of x_dim
-	int* x_dim;
-	int  device;
-	
-	//init in cpu=0,init in gpu=1
-	void init(int device_o,int x_dim_num_o,int *x_dim_o,T* x_src){
-		device = device_o;
-		x_dim_num = x_dim_num_o;
-
-		x_dim = (int *)malloc(x_dim_num * sizeof(int));
-		x_stride = (int *)malloc(x_dim_num * sizeof(int));
-		memcpy(x_dim, x_dim_o, x_dim_num * sizeof(int));
-		
-		if(x_dim_num > 1)
-		  { x_stride[x_dim_num - 1] = 1;
-		    for(int d = x_dim_num - 2; d >= 0; d--){
-				x_stride[d] = x_stride[d + 1] * x_dim[d + 1];
-		     }
-		  }
-		else{
-			x_stride[x_dim_num - 1] = 1;
-		}
-		
-		int length = x_stride[0] * x_dim[0];
-
-		if (device == 0){
-			x = (T*)malloc(length * sizeof(T));
-			memcpy(x, x_src, length * sizeof(T));
-		}
-		else{
-		   checkCudaErrors(cudaMemcpy(x,x_src, length * sizeof(T),cudaMemcpyHostToDevice));
-		}
-	}
-
-	void clear() {
-		free(x_stride);
-		free(x_dim);
-		if (device == 0){
-			free(x);
-		}
-		else {
-			checkCudaErrors(cudaFree(x));
-		}
-	}
-};
-
-template<class T>
-struct x_dx_father{
-	//input from father 
-	T*  x;//forward input
-	int* x_stride;
-	int  x_dim_num;
-	int  x_dim;
-
-	// output to father
-	T*   dx;//backward output
-	int* dx_stride;
-	int  dx_dim_num;
-	int* dx_dim;
-};
-
-template<class T>
-struct w_dw_now{
-	T* dw=NULL;//backward  w
-	int* dw_stride=NULL;
-	int  dw_dim_num;
-	int* dw_dim=NULL;
-
-	T* w=NULL;//w
-	int* w_stride=NULL;
-	int  w_dim_num;
-	int* w_dim=NULL;
-	bool trainable=true;
-};
-
-template<class T>
-struct y_dy_son{
-	//input from son 
-	T*    dy;//backward input
-	int*  dy_stride;
-	int   dy_dim_num;
-	int   dy_dim;
-
-	// output to son
-	T*   y;//forward output
-	int* y_stride;
-	int  y_dim_num;
-	int* y_dim;
-};
-
-
 template<class T>
 class base_op{
  private:
+ public:
 	 int randEx() //real random
 	 {
 		 LARGE_INTEGER seed;
@@ -141,101 +52,160 @@ class base_op{
 		 return rand();
 	 }
 
-	inline void name_of_op_is_repeat() {
-		 bool op_name_is_repeat = this->globle_graph->if_find(name_of_op);
-		 assert(op_name_is_repeat == false);
+	 inline void name_of_op_is_repeat() {
+		 if (this->global_graph->un_map.empty())
+		 {
+			 bool op_name_is_repeat = this->global_graph->if_find(this->name_of_op);
+			 assert(op_name_is_repeat == false);
+		 }
 	 };
 
-	//reload the backward_function,make sure last of the function must be backward_over = 1
-	void backward_function() {
-		float secs = (float)(randEx()%5);      //定义浮点型变量secs
-		clock_t delay;  //定义clock_t类型的变量，表示延时时间
-		delay = secs * CLOCKS_PER_SEC;  //delay赋值为secs 乘以 CLOCKS_PER_SEC值，将输入的秒数转化系统的时间
-			clock_t start = clock();    //定义clock_t类型变量start，并赋值为当前系统的时间
-		//cout << this->name_of_op << " is backwarding now......" << endl;
-		while (clock() - start < delay);  // 如果当前时间减去上一刻的系统时间小于延时的系统时间，则执行循环等待，否则跳出循                                                                          环
-		backward_over = 1;
-		cout << this->name_of_op << endl;
-	
-	}
 
-	//reload the forward_function,make sure last of the function must be forward_over = 1
-	void forward_function() {
-		float secs = (float)(randEx()%5);;      //定义浮点型变量secs
-		clock_t delay;  //定义clock_t类型的变量，表示延时时间
-		delay = secs * CLOCKS_PER_SEC;   //delay赋值为secs 乘以 CLOCKS_PER_SEC值，将输入的秒数转化系统的时间
-		clock_t start = clock();    //定义clock_t类型变量start，并赋值为当前系统的时间
-	    //cout << this->name_of_op << " is forwarding now......" << endl;
-		while (clock() - start < delay);  // 如果当前时间减去上一刻的系统时间小于延时的系统时间，则执行循环等待，否则跳出循                                                                          环
-		forward_over = 1;
-		cout << this->name_of_op<< endl;
-	}
 
-	//-1:father not ready,1:father not ready
-	inline int if_fathers_ready_forward() {
-		int result = 1;
-		if (this->fathers.empty())
-		{
-			return result;
-		}
-		else {
-			for (typename vector<base_op<T>*>::const_iterator iter = this->fathers.cbegin(); iter != this->fathers.cend(); iter++)
-			{
-				if ((*iter)->forward_over != 1)
-				{
-					result = -1;
-					break;
-				}
-			}
-		}
-		return result;
-	}
+	 //-1:father not ready,1:father not ready
+	 inline int if_fathers_ready_forward() {
+		 int result = 1;
+		 if (this->fathers.empty())
+		 {
+			 return result;
+		 }
+		 else {
+			 for (typename vector<base_op<T>*>::const_iterator iter = this->fathers.cbegin(); iter != this->fathers.cend(); iter++)
+			 {
+				 if ((*iter)->forward_over != 1)
+				 {
+					 result = -1;
+					 break;
+				 }
+			 }
+		 }
+		 return result;
+	 }
 
-	//-1:sons not ready,1:sons not ready
-	inline int if_sons_ready_backward() {
-		int result = 1;
-		if (this->sons.empty())
-		{
-			return result;
-		}
-		else {
-			//must have e tpyename
-			for (typename vector<base_op<T>*>::const_iterator iter = this->sons.cbegin(); iter != this->sons.cend(); iter++)
-			{
-				if ((*iter)->backward_over != 1)
-				{
-					result = -1;
-					break;
-				}
-			}
-		}
-		return result;
-	}
+	 //-1:sons not ready,1:sons not ready
+	 inline int if_sons_ready_backward() {
+		 int result = 1;
+		 if (this->sons.empty())
+		 {
+			 return result;
+		 }
+		 else {
+			 //must have e tpyename
+			 for (typename vector<base_op<T>*>::const_iterator iter = this->sons.cbegin(); iter != this->sons.cend(); iter++)
+			 {
+				 if ((*iter)->backward_over != 1)
+				 {
+					 result = -1;
+					 break;
+				 }
+			 }
+		 }
+		 return result;
+	 }
 
- public:
+	 //reload the backward_function,make sure last of the function must be backward_over = 1
+	virtual void backward_function() {
+		 //input::vector<constant<T>*>* dy|vector<variable<T>*>* w;
+		 //output::vector<variable<T>*>* dw|vector<constant<T>*>* dx; 
+		 float secs = (float)(randEx() % 5);      //定义浮点型变量secs
+		 clock_t delay;  //定义clock_t类型的变量，表示延时时间
+		 delay = secs * CLOCKS_PER_SEC;  //delay赋值为secs 乘以 CLOCKS_PER_SEC值，将输入的秒数转化系统的时间
+		 clock_t start = clock();    //定义clock_t类型变量start，并赋值为当前系统的时间
+	     //cout << this->name_of_op << " is backwarding now......" << endl;
+		 while (clock() - start < delay);  // 如果当前时间减去上一刻的系统时间小于延时的系统时间，则执行循环等待，否则跳出循                                                                          环
+		 backward_over = 1;
+		 cout << this->name_of_op << endl;
+
+	 }
+
+	 //reload the forward_function,make sure last of the function must be forward_over = 1
+	 virtual void forward_function() {
+		 //input:: vector<constant<T>*>* x|vector<variable<T>*>* w|vector<constant<T>*>* cons;
+		 //output::constant<T>* y         
+		 float secs = (float)(randEx() % 5);;      //定义浮点型变量secs
+		 clock_t delay;  //定义clock_t类型的变量，表示延时时间
+		 delay = secs * CLOCKS_PER_SEC;   //delay赋值为secs 乘以 CLOCKS_PER_SEC值，将输入的秒数转化系统的时间
+		 clock_t start = clock();    //定义clock_t类型变量start，并赋值为当前系统的时间
+		 //cout << this->name_of_op << " is forwarding now......" << endl;
+		 while (clock() - start < delay);  // 如果当前时间减去上一刻的系统时间小于延时的系统时间，则执行循环等待，否则跳出循                                                                          环
+		 forward_over = 1;
+		 cout << this->name_of_op << endl;
+	 }
+
 	 bool input_op_eq_const=false;
 
 	 mutex mtx;//互斥量
 
+	 //--------------------------op-value--------------------------------------
 	 string name_of_op; //mast be unique;
 
-	//N input op of fathers has  N  x_dy_father<T>[0]....x_dy_father<T>[N-1] parameters 
-	std::vector<x_dx_father<T>*> xdx_father;
+	//N input ops of fathers has  N  x[0]....x[N-1] input,xd[0]....xd[N-1] output
+	//x,dx-
+	vector<constant<T>*>* x;  //from faher, forward
+	vector<constant<T>*>* dx; //to father, backward
+	int xdx_num=0;
 
-	//1 out op of son  has  1 
-	y_dy_son<T>* ydy_son;
+	//N output ops of sons has  only 1 y input ,only 1 dy output
+	//y,dy,
+	constant<T>* y;           //to son ,forward
+	constant<T>* dy_sum;
+	vector<constant<T>*>* dy; //from son ,backward
+	int ydy_num = 0;
+
+	void sum_dy()
+	{//sum dy 
+		constant<T>* dy_sum=new constant<T>;
+		int n = this->dy->size();
+		dy_sum = (*dy)[0];
+		if(n>1)
+		{   int length = ((constant<T>*)(*dy)[0])->x_stride[0] * ((constant<T>*)(*dy)[0])->x_dim[0];
+			if(((constant<T>*)(*dy)[0])->device == 1) //data on gpu
+			  {
+				for(int i = 1; i < n; i++)
+				   {
+					add_vector_gpu(length, dy_sum->x,((constant<T>*)(*dy)[i])->x);
+				   }
+			   }
+			else//data on cpu
+			  {
+				for(int i = 1; i < n; i++)
+				  {
+					for(int j = 0; j < length; j++)
+					  {
+						dy_sum->x[j] = dy_sum->x[j] + ((constant<T>*)(*dy)[i])->x[j];
+					  }
+				 }
+			  }
+		}
+	}
 
 	//w
-	w_dw_now<T>* w_dw;
+	vector<variable<T>*>* w;
+	vector<variable<T>*>* dw;
+	int w_num=0; 
 
-	//constant<T>
-	constant<T>* constant_N;
+	//constant<T>  constant :not must be needed
+	vector<constant<T>*>* cons;
+	int cons_num=0;
 
-	graph<T, base_op>* globle_graph;//this op belong to the globle_graph
+	//dstValue =alpha[0] * resultValue + beta[0] * priordstValue
+	float alpha;//all most 1.0
+	float beta;//all most 0.0
 
-	//---------------------------
+	static graph<T, base_op>* global_graph;//all ops belong to the global_graph
+	static graph<T, variable>* global_w_trainable;
+
+	//template<class T>
+	//static void init_global_graph_ac_varible(){
+	//template <>	base_op<T>::global_graph = new graph<T, base_op>;
+	//template <>	base_op<T>::global_w_trainable = new graph<T, variable>;
+	//}
+
 	std::vector<base_op<T>*> fathers;//up ops
+	std::vector<string> fathers_name;
+
 	std::vector<base_op<T>*> sons;//down ops
+	std::vector<string> sons_name;
 	
 	int fathers_num = 0; //number of the input ops=N
 	int sons_num = 0; //number of the input ops=N
@@ -246,6 +216,7 @@ class base_op{
 	std::atomic<bool> is_forwarding = false;//if now thread is forwording now
 	std::atomic<bool> is_backwarding = false;//if now thread is backwording now
     
+	//--------------------------op-function------------------------------------
 	//make sure is_forwarding is charged for every threads
 	// return 1:can run, 0:is_forwarding or be finished, -1:wait for son ready
 	int if_forward_start_run(){
@@ -261,10 +232,11 @@ class base_op{
 		  }
 		return result;
 	}
-
+	
 	//make sure is_backwarding is charged for every threads
 	// return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
-	int if_backward_start_run() {
+	int if_backward_start_run()
+	{   
 		int result = 0;
 		if (backward_over == 1 || is_backwarding == true)
 			return result;//be ready to remove the op 
@@ -278,60 +250,256 @@ class base_op{
 		}
 		return result;
 	}
-    
-	//run forward mark=0,else mark=1 run backward
-	void ward_run(int mark) {
-		if(mark == 0) {
-			forward_function();
+
+
+	void initvector(){
+		for (int i = 0; i < this->xdx_num; i++)
+		{
+			this->x->push_back(0);
+			this->dx->push_back(0);
 		}
-		else {
-			backward_function();
-	    }
+
+		for (int i = 0; i < this->ydy_num; i++)
+		{
+			this->dy->push_back(0);
+		}
+
+		for (int i = 0; i < this->w_num; i++)
+		{
+			this->dw->push_back(0);
+		}
 	}
 
-	base_op(constant<T>* constant_N_o, graph<T, base_op>* globle_graph_o,string name_o)
-		:name_of_op(name_o),constant_N(constant_N_o),globle_graph(globle_graph_o)
-	{   //create op on grap
-		name_of_op_is_repeat();
-		this->globle_graph->insert_v(this->name_of_op, this);
-		this->input_op_eq_const = true;//if this op is tansported from the constant,backward no need to start! 
+	//init all w,dw,x,xd,y,dy
+	void initparameter(){
+		//cout<<this->name_of_op<<" init"<<endl;
+		//self------------------------------excharge-------------------------fahter
+		//printf("father num:%d \n", this->xdx_num);
+		for (int i = 0; i < this->fathers_num; i++)
+		{
+			vector<string>::iterator ite1 = find(((base_op<T>*)(this->fathers[i]))->sons_name.begin(), ((base_op<T>*)(this->fathers[i]))->sons_name.end(), this->name_of_op);
+			int index = (int)std::distance(std::begin(((base_op<T>*)(this->fathers[i]))->sons_name), ite1);
+			//self->x=father->y::fathers y be converted to this->x ,vector<constant<T>*>* x , vector<base_op<T>*> fathers
+			(*(this->x))[index]=((base_op<T>*)(this->fathers[i]))->y;
+			//father->dy=self->dx ::this->dx be converted to fathrer->dy
+			((base_op<T>*)(this->fathers[i]))->dy->push_back((*(this->dx))[i]);
+		}
+
+		//printf("sons num:%d \n", this->sons_num);
+		//self------------------------------excharge-------------------------son
+		for (int i = 0; i < this->sons_num; i++)
+		{   //find the index of sons->father
+			vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
+			int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
+			//son->x=self->y
+			(*(((base_op<T>*)(this->sons[i]))->x))[index] = this->y;
+
+			//self->dy=son->dx
+			this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
+		}
+		//cout << "initparameter over" << endl;
+	}
+
+	//run forward mark=0,else mark=1 run backward
+	void ward_run(int mark) 
+	{
+		if(mark == 0) 
+		{forward_function();}
+		else
+		{backward_function();}
+	}
+
+	//base_op()
+	base_op(){};    
+	~base_op() {   
 	};
 
-	//parameter=w_dw_o,constant=constant_o;
-	base_op(base_op<T>* op, constant<T>* constant_N_o, graph<T, base_op>* globle_graph_o, string name_o) :
-		name_of_op(name_o), constant_N(constant_N_o),globle_graph(globle_graph_o)
-	{   //create op on graph
-		name_of_op_is_repeat();
-		this->fathers.push_back(op);
-		this->fathers_num = 1;
+	//static new object, over load
+	//no varible input 
+	static base_op<T>* getObejct(vector<constant<T>*>* constant_N_o, string name_o)
+	{	
+		base_op<T>* result = new base_op<T>;
+	
+		result->name_of_op = name_o;
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
+		
+		result->cons = constant_N_o;
+		result->cons_num = constant_N_o->size();
 
-		op->sons.push_back(this);
+		base_op<T>::global_graph->insert_v(result->name_of_op, result);
+		
+		return result;
+	}
+
+	//has varible input
+	static base_op<T>* getObejct(vector<constant<T>*>* constant_N_o, vector<variable<T>*>* w_o, string name_o)
+	{
+		
+		base_op<T>* result = new base_op<T>;
+		result->name_of_op = name_o;
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
+	
+		result->w = w_o;
+		result->w_num = w_o->size();//varible number
+		
+		for (typename vector<variable<T>*>::const_iterator iter = w_o->cbegin(); iter != w_o->cend(); iter++)
+		{   if ((*iter)->trainable==true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
+			    base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
+		}
+
+		result->cons = constant_N_o;
+		result->cons_num = constant_N_o->sise();
+		
+		result->name_of_op = name_o;
+		
+		base_op<T>::global_graph->insert_v(result->name_of_op, result);
+		result->input_op_eq_const = true;//if this op is tansported from the constant,backward no need to start! 
+		return result;
+	}
+
+	//1 op, no varible input 
+	static base_op<T>* getObejct(base_op<T>* op, vector<constant<T>*>* constant_N_o, string name_o)
+	{
+		base_op<T>* result = new base_op<T>;
+		result->name_of_op = name_o;
+		
+		result->cons = constant_N_o;
+		result->cons_num = constant_N_o->size();
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
+
+		result->fathers.push_back(op);
+		result->fathers_name.push_back(op->name_of_op);
+		result->fathers_num += 1;
+		result->xdx_num += 1;
+
+		op->sons.push_back(result);
+		op->sons_name.push_back(result->name_of_op);
 		op->sons_num += 1;
+		op->ydy_num += 1;
 
-		this->globle_graph->insert_v(this->name_of_op, this);
+		base_op<T>::global_graph->insert_v(result->name_of_op, result);
+		return result;
+	}
+
+	//1 op, varible input 
+	static base_op<T>* getObejct(base_op<T>* op, vector<constant<T>*>* constant_N_o,vector<variable<T>*>* w_o, string name_o)
+	{
+		base_op<T>* result = new base_op<T>;
+		result->name_of_op = name_o;
+	
+		result->w = w_o;
+		result->w_num = w_o->size();//varible number
+		for (typename vector<variable<T>*>::const_iterator iter = w_o->cbegin(); iter != w_o->cend(); iter++)
+		{
+			if ((*iter)->trainable == true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
+				base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
+		}
+		result->cons = constant_N_o;
+		result->cons_num = constant_N_o->size();
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
 		
-	};
+		result->fathers.push_back(op);
+		result->fathers_name.push_back(op->name_of_op);
+		result->fathers_num += 1;
+		result->xdx_num += 1;
 
-	//parameter=w_dw_o,constant=constant_o;
-	base_op(base_op<T>* op1,base_op<T>* op2,constant<T>* constant_N_o,graph<T, base_op>* globle_graph_o,string name_o):
-		name_of_op(name_o),constant_N(constant_N_o),globle_graph(globle_graph_o)
-	{   //create op on graph
-		name_of_op_is_repeat();
+		op->sons.push_back(result);
+		op->sons_name.push_back(result->name_of_op);
+		op->sons_num += 1;
+		op->ydy_num += 1;
 
-		this->fathers.push_back(op1);
-		this->fathers.push_back(op2);
-		this->fathers_num = 2;
-		
-		op1->sons.push_back(this);
+		base_op<T>::global_graph->insert_v(result->name_of_op, result);
+		return result;
+	}
+
+	//2 ops, no varible input 
+	static base_op<T>* getObejct(base_op<T>* op1, base_op<T>* op2, vector<constant<T>*>* constant_N_o, string name_o)
+	{   
+		base_op<T>* result = new base_op<T>;
+		result->name_of_op = name_o;
+		result->cons = constant_N_o;
+		result->cons_num = constant_N_o->size();
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
+
+		result->fathers.push_back(op1);
+		result->fathers_name.push_back(op1->name_of_op);
+		result->fathers.push_back(op2);
+		result->fathers_name.push_back(op2->name_of_op);
+		result->fathers_num += 2;
+		result->xdx_num += 2;
+
+		op1->sons.push_back(result);
+		op1->sons_name.push_back(result->name_of_op);
 		op1->sons_num += 1;
-		op2->sons.push_back(this);
+		op1->ydy_num += 1;
+
+		op2->sons.push_back(result);
+		op2->sons_name.push_back(result->name_of_op);
 		op2->sons_num += 1;
-		this->globle_graph->insert_v(this->name_of_op, this);
-	};
-    
-	~base_op() {
-	 
-	};
+		op2->ydy_num += 1;
+
+		base_op<T>::global_graph->insert_v(result->name_of_op, result);
+		return result;
+	}
+
+	//2 ops, varible input 
+	static base_op<T>* getObejct(base_op<T>* op1, base_op<T>* op2, vector<constant<T>*>* constant_N_o, vector<variable<T>*>* w_o, string name_o)
+	{
+		base_op<T>* result = new base_op<T>;
+		result->name_of_op = name_o;
+
+		result->w = w_o;
+		result->w_num = w_o->size();//varible number
+		for (typename vector<variable<T>*>::const_iterator iter = w_o->cbegin(); iter != w_o->cend(); iter++)
+		{
+			if ((*iter)->trainable == true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
+				base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
+		}
+
+		result->cons = constant_N_o;
+		result->cons_num = constant_N_o->size();
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
+
+	
+		result->fathers.push_back(op1);
+		result->fathers_name.push_back(op1->name_of_op);
+		result->fathers.push_back(op2);
+		result->fathers_name.push_back(op2->name_of_op);
+		result->fathers_num = 2;
+		result->xdx_num += 2;
+
+		op1->sons.push_back(result);
+		op1->sons_name.push_back(result->name_of_op);
+		op1->sons_num += 1;
+		op1->ydy_num += 1;
+
+		op2->sons.push_back(result);
+		op2->sons_name.push_back(result->name_of_op);
+		op2->sons_num += 1;
+		op2->ydy_num += 1;
+	
+		base_op<T>::global_graph->insert_v(result->name_of_op, result);
+		return result;
+	}
 };
-//template class base_op<int>;
+template<class T>  graph<T, base_op>*   base_op<T>::global_graph;//for static
+template<class T>  graph<T, variable>*  base_op<T>::global_w_trainable;  //for static
 #endif // !_BASE_OP_CUH

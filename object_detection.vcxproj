@@ -80,13 +80,25 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="fp16_dev.cu" />
+    <CudaCompile Include="gpumathtool.cu" />
     <CudaCompile Include="main.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base_op.cuh" />
+    <ClInclude Include="constant_class.cuh" />
+    <ClInclude Include="error_util.h" />
+    <ClInclude Include="fp16_dev.h" />
+    <ClInclude Include="fp16_emu.h" />
+    <ClInclude Include="gpumathtool.cuh" />
     <ClInclude Include="graph_active_threads.cuh" />
-    <ClInclude Include="hash_globle.cuh" />
+    <ClInclude Include="hash_global.cuh" />
+    <ClInclude Include="sum_op.cuh" />
     <ClInclude Include="test_tool.h" />
+    <ClInclude Include="weigh_class.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="fp16_emu.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -18,14 +18,13 @@
 #include <atomic>
 #include <helper_cuda.h>       // helper for CUDA Error handling and initialization
 #include <helper_string.h>  // helper for string parsing
-#include "hash_globle.cuh"
+#include "hash_global.cuh"
 #include <assert.h>
 #include <thread>         // std::thread 
 #include <mutex>          // std::mutex
 
 #include "base_op.cuh"
-#include "hash_globle.cuh"
-#include "test_tool.h"
+#include "hash_global.cuh"
 
 #include <windows.h>
 #include <wincrypt.h>
@@ -54,12 +53,32 @@ private:
 	}
 public:
 	mutex m;
+	int mark_InitParameter = 0;//make sure the parameters of the ops  are all cennected 
+	int forwardover = 0;
+	int backwardover = 0;
 
-	graph<T, base_op>* graph_globle_active;
-	std::vector<string> forwardkeys;
+	graph<T, base_op>* graph_global_active;
+	std::vector<string> forwardkeys;//used by forwardstart and backwardstart
 
 	int MaxThreadsNum;
 	atomic<int> activeThreadsNum = 0;//active thread
+
+
+	void init_vector() {
+		vector<string> keys = this->graph_global_active->allKeys();
+		for (typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
+		{
+			((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initvector();
+		}
+	}
+
+	void init_parameter() {
+		vector<string> keys = this->graph_global_active->allKeys();
+		for(typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
+		   {
+			  ((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initparameter();
+		   }
+	}
 
 	void forward_function(int id){
 		vector<string> v_1;
@@ -79,9 +98,9 @@ public:
 		      if(size_now>1)
 				  { 
 				    // return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
-				    mark=this->graph_globle_active->un_map[v_1[n]]->if_forward_start_run();
+				    mark=this->graph_global_active->un_map[v_1[n]]->if_forward_start_run();
 					if (mark == 1)//run op forward
-					   {this->graph_globle_active->un_map[v_1[n]]->ward_run(0);
+					   {this->graph_global_active->un_map[v_1[n]]->ward_run(0);
 						 v_1.erase(v_1.begin()+n);
 						 size_now = v_1.size();//aftering be removed the value,charge size of the vector 
 						 n = 0;
@@ -96,10 +115,10 @@ public:
 				else //if only 1 op left,wait until deal with it, or it be dealed by other thread
 				 {  
 					while(true){
-						mark = this->graph_globle_active->un_map[v_1[0]]->if_forward_start_run();
+						mark = this->graph_global_active->un_map[v_1[0]]->if_forward_start_run();
 						if(mark == 1)//run op forward
 						  {
-							this->graph_globle_active->un_map[v_1[0]]->ward_run(0);
+							this->graph_global_active->un_map[v_1[0]]->ward_run(0);
 							outbreak = 1;
 							break;
 						  }
@@ -132,11 +151,11 @@ public:
 			if (size_now > 1)
 			{
 				// return 1:can run, 0:is_backwarding or be finished, -1:wait back son ready
-				mark = this->graph_globle_active->un_map[v_1[n]]->if_backward_start_run();
+				mark = this->graph_global_active->un_map[v_1[n]]->if_backward_start_run();
 				//cout<<mark<<endl;
 				if (mark == 1)//run op backward
 				{
-					this->graph_globle_active->un_map[v_1[n]]->ward_run(1);
+					this->graph_global_active->un_map[v_1[n]]->ward_run(1);
 					v_1.erase(v_1.begin() + n);
 					size_now = v_1.size();//aftering be removed the value,charge size of the vector 
 					n = 0;
@@ -151,10 +170,10 @@ public:
 			else //if only 1 op left,wait until deal with it, or it be dealed by other thread
 			{
 				while (true) {
-					mark = this->graph_globle_active->un_map[v_1[0]]->if_backward_start_run();
+					mark = this->graph_global_active->un_map[v_1[0]]->if_backward_start_run();
 					if (mark == 1)//run op backward
 					{
-						this->graph_globle_active->un_map[v_1[0]]->ward_run(1);
+						this->graph_global_active->un_map[v_1[0]]->ward_run(1);
 						outbreak = 1;
 						break;
 					}
@@ -171,6 +190,11 @@ public:
 	}
 
 	void forward_start(int UseMulThread){
+		if (this->mark_InitParameter == 0)
+		{
+			this->init_vector();
+			this->init_parameter();
+		}
 		this->activeThreadsNum = this->MaxThreadsNum;
 		if (UseMulThread == 1){//use mulity threads
 		   int num=this->MaxThreadsNum;
@@ -195,10 +219,14 @@ public:
 			forward_function(1);
 		}
 
-	
+		this->forwardover = 1;
 	}
 
 	void backward_start(int UseMulThread) {
+		if (forwardover != 1)
+		{
+			this->forward_start(UseMulThread);
+		}
 		this->activeThreadsNum = this->MaxThreadsNum;
 		if (UseMulThread == 1) {//use mulity threads
 			int num = this->MaxThreadsNum;
@@ -222,16 +250,15 @@ public:
 		{   //use only one thread
 			backward_function(1);
 		}
-
-	
+		this->backwardover = 1;
 	}
 
-	static graph_active<T>* getobject(graph<T, base_op>* graph_globle_active_o){
+	static graph_active<T>* getobject(graph<T, base_op>* graph_global_active_o){
 		//create new object
 		graph_active<T>* object_ga =new graph_active<T>;
 		
 		//catch graph 
-		object_ga->graph_globle_active = graph_globle_active_o;
+		object_ga->graph_global_active = graph_global_active_o;
 		
 		//thread nums
 		int maxthreadnum = object_ga->CatchCpuThreadsMaxNum();
@@ -239,7 +266,7 @@ public:
 		object_ga->activeThreadsNum=object_ga->MaxThreadsNum;
 		
 		//forwardkeys= backwardkeys
-		object_ga->forwardkeys=object_ga->graph_globle_active->allKeys();//init forwardkeys
+		object_ga->forwardkeys=object_ga->graph_global_active->allKeys();//init forwardkeys
 		//object_ga->backwardkeys.assign(object_ga->backwardkeys.begin(), object_ga->backwardkeys.end());//assign backwardkeys
 		
 		return object_ga;

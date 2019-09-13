@@ -18,7 +18,7 @@
 #include <atomic>
 #include <helper_cuda.h>       // helper for CUDA Error handling and initialization
 #include <helper_string.h>  // helper for string parsing
-#include "hash_globle.cuh"
+#include "hash_global.cuh"
 #include <assert.h>
 #include<mutex>
 #include <thread>         // std::thread 
@@ -80,17 +80,30 @@ public:
 };
 
 void test() {
-	testone* obj=new testone();
-	int num = 4;
-	std::thread  **p = (std::thread**)malloc(num * sizeof(std::thread**));
-	for (int i = 0; i < num; i++) {
-		p[i] = new std::thread(&testone::add_test,obj,i);
-	}
-	for (int i = 0; i < num; i++)
-	{
-		p[i]->detach();
-	}
-	std::thread tj(&testone::sub_test, obj);
-	tj.join();
-	obj->printlast();
+	//testone* obj=new testone();
+	//int num = 4;
+	//std::thread  **p = (std::thread**)malloc(num * sizeof(std::thread**));
+	//for (int i = 0; i < num; i++) {
+	//	p[i] = new std::thread(&testone::add_test,obj,i);
+	//}
+	//for (int i = 0; i < num; i++)
+	//{
+	//	p[i]->detach();
+	//}
+	//std::thread tj(&testone::sub_test, obj);
+	//tj.join();
+	//obj->printlast();
+
+	//vector test
+	vector<string>  avector;
+	
+	avector.push_back("a");
+	avector.push_back("b");
+	avector.push_back("c");
+	avector.push_back("d");
+	vector<string>::iterator ite = find(avector.begin(), avector.end(), "d");
+	int index = (int)std::distance(std::begin(avector), ite);
+	printf("index:=%d \n", index);
+	avector[3] = "w";
+
 }
