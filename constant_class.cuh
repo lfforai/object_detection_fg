@@ -70,8 +70,33 @@ public:
 	int copynum = 0;
 	string con_name;
 	
+	//log ,exp.....
+	//typedef enum {
+	//	//cudnnReduceTensorOp_t
+	//	CONS_LOG = 0,
+	//	CONS_APOWX = 1,
+	//	CONS_XPOWA = 2,
+	//	CONS_SQRT = 3,
+	//	CONS_COS = 4,
+	//	CONS_SIN = 5,
+	//	CONS_EXP = 6,
+	//} gpu_math_op;
+
+	//partial derivative;
+	constant<T>* function_tensor(gpu_math_op math_op,T aphal,int pderi)
+	  {
+		constant<T>* result =this->copy();
+		int len= result->x_stride[0] * result->x_dim[0];
+		if(pderi == 0)  //ong
+		   math_vector_gpu(math_op, len, result->x, aphal);
+		if(pderi == 1) //partial derivative
+		   dmath_vector_gpu(math_op, len, result->x, aphal);
+		return  result;
+	  }
 	
-	constant<T>* copy(){
+	//---------------------
+	constant<T>* copy()
+	{
 		this->copynum+=1;
 		constant<T>* result=constant<T>::getObject(this->con_name+"_"+to_string(this->copynum), this->device, this->x_dim_num, this->x_dim, this->x);
 		return result;

@@ -28,6 +28,24 @@ using namespace std;
 
 #ifndef _GPU_MATH_TOOL_CUH
 #define _GPU_MATH_TOOL_CUH
+typedef enum {
+	//cudnnReduceTensorOp_t
+	CONS_LOG = 0,
+	CONS_APOWX = 1,
+	CONS_XPOWA = 2,
+	CONS_SQRT = 3,
+	CONS_COS = 4,
+	CONS_SIN = 5,
+	CONS_EXP = 6,
+} gpu_math_op;
+
+template <class value_type>
+//A only used by apowx,xpowa
+void math_vector_gpu(gpu_math_op math_op, int size, value_type *buffA, value_type  aphal);
+
+template <class value_type>
+//A only used by apowx,xpowa
+void dmath_vector_gpu(gpu_math_op math_op, int size, value_type *buffA, value_type  aphal);
 
 static int checkCudaError(cudaError_t code, const char* expr, const char* file, int line) {
 	if (code) {

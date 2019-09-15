@@ -65,7 +65,7 @@ int main()
     
 	int dim[4] = {1,1,2,4};
 	int dimC[4] = {1,1,3,1};
-	float src[8] = { -4.0,1.0,1.0,-3.0,1.0,2.0,2.0,-2.0 };
+	float src[8] = { 4.0,1.0,1.0,3.0,1.0,2.0,2.0,3.0 };
 	float srcC[4] ={ 3.0,2.0,1.0};
 	constant<float>*  A = constant<float>::getObject("A", 1, 4, dim, src);
 	constant<float>*  C = constant<float>::getObject("C", 1, 4, dim, src);
@@ -73,6 +73,9 @@ int main()
 	float bate = 2.0;
 	constant<float>* D= A->scala_mul(bate);
 	cout<<D->con_name<<endl;
+	constant<float>* D1=D->function_tensor(CONS_LOG,1.0,1);
+	cout<<D1->con_name<<endl;
+
 	//float ap0=1.0;
 	//float ap1=0.0;
 	//float beta=0.0;
