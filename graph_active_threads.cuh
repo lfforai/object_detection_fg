@@ -63,7 +63,6 @@ public:
 	int MaxThreadsNum;
 	atomic<int> activeThreadsNum = 0;//active thread
 
-
 	void init_vector() {
 		vector<string> keys = this->graph_global_active->allKeys();
 		for (typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)

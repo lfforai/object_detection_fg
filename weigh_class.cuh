@@ -23,59 +23,88 @@
 #include <mutex>
 #include <ctime> 
 #include "test_tool.h"
-
+#include "constant_class.cuh"
 #include <windows.h>
 #include <wincrypt.h>
 using namespace std;
 #ifndef _WEIGH_CLASS_CUH
 #define _WEIGH_CLASS_CUH 
 template<class T>
-struct variable{
-	
-	T* w = NULL;//w
-	int* w_stride = NULL;
-	int  w_dim_num;
-	int* w_dim = NULL;
-
-	int device = 0;
-	bool trainable = true;
-
+class variable:public constant<T>
+{
+private:
+public:
+	bool trainable=true;
 	string var_name;
+	//init in cpu=0,init in gpu=1
+	variable(){};
+	variable(bool trainble_o,string con_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
+		device = device_o;
+		x_dim_num = x_dim_num_o;
+		var_name = con_name_o;
+		r->trainable = trainble_o;
 
-	static variable<T>* getObject(string var_name_o,int device_o, int w_dim_num_o, int *w_dim_o, T* w_src)
-	  {
-		variable<T>* r = new variable<T>;
-		r->var_name = var_name_o;
-		r->device = device_o;
-		r->w_dim_num = w_dim_num_o;
+		x_dim = (int *)malloc(x_dim_num * sizeof(int));
+		x_stride = (int *)malloc(x_dim_num * sizeof(int));
+		memcpy(x_dim, x_dim_o, x_dim_num * sizeof(int));
 
-		r->w_dim = (int *)malloc(r->w_dim_num * sizeof(int));
-		r->w_stride = (int *)malloc(r->w_dim_num * sizeof(int));
-		memcpy(r->w_dim, w_dim_o, r->w_dim_num * sizeof(int));
-
-		if (r->w_dim_num > 1)
+		if (x_dim_num > 1)
 		{
-			r->w_stride[r->w_dim_num - 1] = 1;
-			for (int d = r->w_dim_num - 2; d >= 0; d--) {
-				r->w_stride[d] = r->w_stride[d + 1] * r->w_dim[d + 1];
+			x_stride[x_dim_num - 1] = 1;
+			for (int d = x_dim_num - 2; d >= 0; d--) {
+				x_stride[d] = x_stride[d + 1] * x_dim[d + 1];
 			}
 		}
 		else {
-			r->w_stride[r->w_dim_num - 1] = 1;
+			x_stride[x_dim_num - 1] = 1;
 		}
 
-		int length = r->w_stride[0] * r->w_dim[0];
+		int length = x_stride[0] * x_dim[0];
 
-		if (r->device == 0){
-			r->w = (T*)malloc(length * sizeof(T));
-			memcpy(r->w, w_src, length * sizeof(T));
+		if (device == 0) {
+			x = (T*)malloc(length * sizeof(T));
+			memcpy(x, x_src, length * sizeof(T));
 		}
 		else {
-			checkCudaErrors(cudaMalloc((void**)&r->w, length * sizeof(T)));
-			checkCudaErrors(cudaMemcpy(r->w, w_src, length * sizeof(T), cudaMemcpyHostToDevice));
+			checkCudaErrors(cudaMemcpy(x, x_src, length * sizeof(T), cudaMemcpyHostToDevice));
+		}
+	}
+
+	static variable<T>* getObject(bool trainble_o,string con_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src)
+	{
+		variable<T>* r = new variable<T>;
+		r->trainable= trainble_o;
+		r->var_name = con_name_o;
+		r->device = device_o;
+		r->x_dim_num = x_dim_num_o;
+
+		r->x_dim = (int *)malloc(r->x_dim_num * sizeof(int));
+		r->x_stride = (int *)malloc(r->x_dim_num * sizeof(int));
+		memcpy(r->x_dim, x_dim_o, r->x_dim_num * sizeof(int));
+
+		if (r->x_dim_num > 1)
+		{
+			r->x_stride[r->x_dim_num - 1] = 1;
+			for (int d = r->x_dim_num - 2; d >= 0; d--) {
+				r->x_stride[d] = r->x_stride[d + 1] * r->x_dim[d + 1];
+			}
+		}
+		else {
+			r->x_stride[r->x_dim_num - 1] = 1;
+		}
+
+		int length = r->x_stride[0] * r->x_dim[0];
+
+		if (r->device == 0) {
+			r->x = (T*)malloc(length * sizeof(T));
+			memcpy(r->x, x_src, length * sizeof(T));
+		}
+		else {
+			checkCudaErrors(cudaMallocManaged((void**)&r->x, length * sizeof(T)));
+			checkCudaErrors(cudaMemcpy(r->x, x_src, length * sizeof(T), cudaMemcpyDefault));
 		}
 		return r;
-	  }
+	}
 };
 
 #endif // !_WEIGH_CLASS_CUH

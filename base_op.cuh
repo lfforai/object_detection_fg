@@ -158,7 +158,7 @@ class base_op{
 		int n = this->dy->size();
 		dy_sum = (*dy)[0];
 		if(n>1)
-		{   int length = ((constant<T>*)(*dy)[0])->x_stride[0] * ((constant<T>*)(*dy)[0])->x_dim[0];
+		 {  int length = ((constant<T>*)(*dy)[0])->x_stride[0] * ((constant<T>*)(*dy)[0])->x_dim[0];
 			if(((constant<T>*)(*dy)[0])->device == 1) //data on gpu
 			  {
 				for(int i = 1; i < n; i++)
@@ -176,7 +176,7 @@ class base_op{
 					  }
 				 }
 			  }
-		}
+		 }
 	}
 
 	//w
@@ -189,17 +189,16 @@ class base_op{
 	int cons_num=0;
 
 	//dstValue =alpha[0] * resultValue + beta[0] * priordstValue
-	float alpha;//all most 1.0
-	float beta;//all most 0.0
+	T alpha;//all most 1.0
+	T beta;//all most 0.0
 
 	static graph<T, base_op>* global_graph;//all ops belong to the global_graph
 	static graph<T, variable>* global_w_trainable;
+	static graph<T, constant>* global_placehold_constant;
 
-	//template<class T>
-	//static void init_global_graph_ac_varible(){
-	//template <>	base_op<T>::global_graph = new graph<T, base_op>;
-	//template <>	base_op<T>::global_w_trainable = new graph<T, variable>;
-	//}
+    // if neededBackwark_dx dw==true ,computer dx,dw  
+	bool neededBackwark_dx=true;
+	bool neededBackwark_dw=true;
 
 	std::vector<base_op<T>*> fathers;//up ops
 	std::vector<string> fathers_name;
@@ -316,10 +315,15 @@ class base_op{
 
 	//static new object, over load
 	//no varible input 
-	static base_op<T>* getObejct(vector<constant<T>*>* constant_N_o, string name_o)
+	static base_op<T>* getObejct(vector<constant<T>*>* constant_N_o, string name_o, char* Tensor_des = "")
 	{	
 		base_op<T>* result = new base_op<T>;
-	
+
+		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
+		{
+			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
+				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
+		}
 		result->name_of_op = name_o;
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
@@ -335,11 +339,17 @@ class base_op{
 	}
 
 	//has varible input
-	static base_op<T>* getObejct(vector<constant<T>*>* constant_N_o, vector<variable<T>*>* w_o, string name_o)
+	static base_op<T>* getObejct(vector<constant<T>*>* constant_N_o, vector<variable<T>*>* w_o, string name_o, char* Tensor_des = "")
 	{
 		
 		base_op<T>* result = new base_op<T>;
 		result->name_of_op = name_o;
+
+		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
+		{
+			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
+				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
+		}
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
@@ -364,13 +374,19 @@ class base_op{
 	}
 
 	//1 op, no varible input 
-	static base_op<T>* getObejct(base_op<T>* op, vector<constant<T>*>* constant_N_o, string name_o)
+	static base_op<T>* getObejct(base_op<T>* op, vector<constant<T>*>* constant_N_o, string name_o,char* Tensor_des = "")
 	{
 		base_op<T>* result = new base_op<T>;
 		result->name_of_op = name_o;
 		
 		result->cons = constant_N_o;
 		result->cons_num = constant_N_o->size();
+
+		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
+		{
+			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
+				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
+		}
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
@@ -391,7 +407,7 @@ class base_op{
 	}
 
 	//1 op, varible input 
-	static base_op<T>* getObejct(base_op<T>* op, vector<constant<T>*>* constant_N_o,vector<variable<T>*>* w_o, string name_o)
+	static base_op<T>* getObejct(base_op<T>* op, vector<constant<T>*>* constant_N_o,vector<variable<T>*>* w_o, string name_o, char* Tensor_des = "")
 	{
 		base_op<T>* result = new base_op<T>;
 		result->name_of_op = name_o;
@@ -405,6 +421,12 @@ class base_op{
 		}
 		result->cons = constant_N_o;
 		result->cons_num = constant_N_o->size();
+
+		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
+		{
+			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
+				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
+		}
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
@@ -425,12 +447,19 @@ class base_op{
 	}
 
 	//2 ops, no varible input 
-	static base_op<T>* getObejct(base_op<T>* op1, base_op<T>* op2, vector<constant<T>*>* constant_N_o, string name_o)
+	static base_op<T>* getObejct(base_op<T>* op1, base_op<T>* op2, vector<constant<T>*>* constant_N_o, string name_o, char* Tensor_des = "")
 	{   
 		base_op<T>* result = new base_op<T>;
 		result->name_of_op = name_o;
 		result->cons = constant_N_o;
 		result->cons_num = constant_N_o->size();
+
+
+		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
+		{
+			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
+				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
+		}
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
@@ -458,7 +487,7 @@ class base_op{
 	}
 
 	//2 ops, varible input 
-	static base_op<T>* getObejct(base_op<T>* op1, base_op<T>* op2, vector<constant<T>*>* constant_N_o, vector<variable<T>*>* w_o, string name_o)
+	static base_op<T>* getObejct(base_op<T>* op1, base_op<T>* op2, vector<constant<T>*>* constant_N_o, vector<variable<T>*>* w_o, string name_o,char* Tensor_des="")
 	{
 		base_op<T>* result = new base_op<T>;
 		result->name_of_op = name_o;
@@ -469,6 +498,12 @@ class base_op{
 		{
 			if ((*iter)->trainable == true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
 				base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
+		}
+
+		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
+		{
+			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
+				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
 		}
 
 		result->cons = constant_N_o;
@@ -502,4 +537,5 @@ class base_op{
 };
 template<class T>  graph<T, base_op>*   base_op<T>::global_graph;//for static
 template<class T>  graph<T, variable>*  base_op<T>::global_w_trainable;  //for static
+template<class T>  graph<T, constant>*  base_op<T>::global_placehold_constant;  //for static
 #endif // !_BASE_OP_CUH

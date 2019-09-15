@@ -43,6 +43,9 @@
     <ClInclude Include="gpumathtool.cuh">
       <Filter>gpu_math_tool</Filter>
     </ClInclude>
+    <ClInclude Include="x_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="constant_weigh">

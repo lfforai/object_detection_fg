@@ -28,6 +28,29 @@ using namespace std;
 
 #ifndef _GPU_MATH_TOOL_CUH
 #define _GPU_MATH_TOOL_CUH
+
+static int checkCudaError(cudaError_t code, const char* expr, const char* file, int line) {
+	if (code) {
+		printf("CUDA error at %s:%d, code=%d (%s) in '%s'", file, line, (int)code, cudaGetErrorString(code), expr);
+		return 1;
+	}
+	return 0;
+}
+
+static int checkCudnnError(cudnnStatus_t code, const char* expr, const char* file, int line) {
+	if (code) {
+		printf("CUDNN error at %s:%d, code=%d (%s) in '%s'\n", file, line, (int)code, cudnnGetErrorString(code), expr);
+		return 1;
+	}
+	return 0;
+}
+
+#define checkCudaErr(...)       do { int err = checkCudaError(__VA_ARGS__, #__VA_ARGS__, __FILE__, __LINE__); if (err) goto clean; } while (0)
+
+#define checkCudnnErr(...)      do { int err = checkCudnnError(__VA_ARGS__, #__VA_ARGS__, __FILE__, __LINE__);  if (err) goto clean; } while (0)
+
+//function
 template <class value_type>
 void add_vector_gpu(int size, value_type *buffA, value_type *buffB);
+//
 #endif // !_GPU_MATH_TOOL_CUH
