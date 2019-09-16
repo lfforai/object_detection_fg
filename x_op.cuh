@@ -35,13 +35,14 @@
 using namespace std;
 #ifndef _SUM_OP_CUH
 #define _SUM_OP_CUH
+
+//all varible and constant must be init by x_op
 template<class T>
 class x_op :public base_op<T>
 {
 public:
-
 	//y=alpha*x
-	static x_op<T>* getObejct(vector<constant<T>*>* constant_N_o,T*alpha_o, string name_o)
+	static x_op<T>* getObejct(vector<constant<T>*>* constant_N_o,T alpha_o, string name_o)
 	{   //constant_N_o.size()==1
 		x_op<T>* result = new x_op<T>;
 		result->alpha = alpha_o;
@@ -62,7 +63,7 @@ public:
 	}
 
 	//y=alpha*x
-	static x_op<T>* getObejct(vector<varialbe<T>*>* w_o, T*alpha_o, string name_o)
+	static x_op<T>* getObejct(vector<varialbe<T>*>* w_o, T alpha_o, string name_o)
 	{   //w_o.size()==1
 		x_op<T>* result = new x_op<T>;
 		result->alpha = alpha_o;
@@ -89,19 +90,25 @@ public:
 		//transport dy to dx
 		if(this->neededBackwark_dw==true);
 		{  this->sum_dy();
-		   this->dy_sum
-		   
+		   this->dw = this->dy_sum->scala_mul(this->alpha);
 		}
 		backward_over = 1;
-		cout << this->name_of_op << endl;
+		cout <<"backward::"<<this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
 	void forward_function() 
 	   { //from this->x computer this->y
-		this->y= ((constant<T>*)((*(this->cons))[0]))*this->alpha;
-		forward_over = 1;
-		cout << this->name_of_op << endl;
+		if (result->neededBackwark_dw == false)
+		{   //input is constant
+			this->y = ((constant<T>*)((*(this->cons))[0]))->scala_mul(this->alpha);
+		}
+		else {
+			//input is varible
+			this->y = ((constant<T>*)((*(this->w))[0]))->scala_mul(this->alpha);
+		}
+		 forward_over = 1;
+		 cout <<"forward::"<<this->name_of_op << endl;
 	   }
 };
 #endif // !_SUM_OP_CUH

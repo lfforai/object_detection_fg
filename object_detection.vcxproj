@@ -87,7 +87,9 @@
   <ItemGroup>
     <ClInclude Include="base_op.cuh" />
     <ClInclude Include="constant_class.cuh" />
+    <ClInclude Include="div_op.cuh" />
     <ClInclude Include="error_util.h" />
+    <ClInclude Include="exp_op.cuh" />
     <ClInclude Include="x_op.cuh" />
     <ClInclude Include="fp16_dev.h" />
     <ClInclude Include="fp16_emu.h" />

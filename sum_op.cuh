@@ -36,12 +36,17 @@ using namespace std;
 #ifndef _SUM_OP_CUH
 #define _SUM_OP_CUH
 template<class T>
-class sum_op2 :public base_op<T>
+class sum_op :public base_op<T>
 {
 public:
-	static sum_op2<T>* getObejct(base_op<T>* op1, base_op<T>* op2,string name_o, char* Tensor_des = "")
-	{
-		sum_op2<T>* result = new sum_op2<T>;
+	T aphla_sum1;
+	T aphla_sum2;
+	static sum_op<T>* getObejct(base_op<T>* op1,T aphla1,T aphla2,base_op<T>* op2,string name_o, char* Tensor_des = "")
+	{  
+		//assume size must be same
+		sum_op<T>* result = new sum_op<T>;
+		result->aphla_sum1 = aphla1;
+		result->aphla_sum2 = aphla2;
 		result->name_of_op = name_o;
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
@@ -66,7 +71,7 @@ public:
 		op2->sons_num += 1;
 		op2->ydy_num += 1;
 
-		sum_op2<T>::global_graph->insert_v(result->name_of_op, result);
+		sum_op<T>::global_graph->insert_v(result->name_of_op, result);
 		return result;
 	}
 	
@@ -74,37 +79,39 @@ public:
     void backward_function(){
 		//transport dy to dx
 		this->sum_dy();
-		for(typename vector<constant<T>*>::const_iterator iter = this->dx->cbegin(); iter != this->dx->cend(); iter++)
-		  {     //iter is a father->xd;
-		    	(*iter)=this->dy_sum;
-		  }
+		int i = 0;
+		for (typename vector<constant<T>*>::const_iterator iter = this->dx->cbegin(); iter != this->dx->cend(); iter++)
+		{     //iter is a father->xd;
+			if (i == 0)
+			{
+				(*iter) = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla_sum1);
+				i += 1;
+			}
+			if (i == 1)
+				(*iter) = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla_sum2);
+		}
 		backward_over = 1;
-		cout << this->name_of_op << endl;
+		cout <<"backward::"<<this->name_of_op << endl;
 	}
 	
 	//reload the forward_function,make sure last of the function must be forward_over = 1
 	void forward_function(){
 		//from this->x computer this->y
 		int i = 0;
-		T alpha1 = 1.0;
-		T alpha2 = 1.0;
 		T beta = 0;
 		for(typename vector<constant<T>*>::const_iterator iter = this->x->cbegin(); iter != this->x->cend(); iter++)
-		  {      
+		  { //assume op1.y.size==op2.y.size     
 			if(i == 0)
-			  { ((constant<T>*)(this->y))->x_dim=((constant<T>*)(*iter))->x_dim;
-				((constant<T>*)(this->y))->x_dim_num=((constant<T>*)(*iter))->x_dim_num;
-				((constant<T>*)(this->y))->x_stride=((constant<T>*)(*iter))->x_stride;
-				((constant<T>*)(this->y))->x = ((constant<T>*)(*iter))->x;
+			  { ((constant<T>*)(this->y))=((constant<T>*)(*iter));
 				i += 1;
 			  }
 			else
 			 {
-				constant<T>::op_math(CONSTANT_OP_ADD,((constant<T>*)(this->y)),((constant<T>*)(*iter)),((constant<T>*)(this->y)), &alpha1, &alpha2, &beta);
+				constant<T>::op_math(CONSTANT_OP_ADD,((constant<T>*)(this->y)),((constant<T>*)(*iter)),((constant<T>*)(this->y)), &this->aphla_sum1, &this->aphla_sum2, &beta);
 			 }
 		  }
 		forward_over = 1;
-		cout << this->name_of_op << endl;
+		cout <<"forward::"<<this->name_of_op << endl;
 	}
 };
 #endif // !_SUM_OP_CUH

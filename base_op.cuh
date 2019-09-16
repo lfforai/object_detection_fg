@@ -252,17 +252,20 @@ class base_op{
 
 
 	void initvector(){
+		//used by index::a[index],so must be inited before backward
 		for (int i = 0; i < this->xdx_num; i++)
 		{
 			this->x->push_back(0);
 			this->dx->push_back(0);
 		}
 
-		for (int i = 0; i < this->ydy_num; i++)
+		//used by pushback::a.pushback,so not need to be inited befor backward
+	/*	for (int i = 0; i < this->ydy_num; i++)
 		{
 			this->dy->push_back(0);
-		}
+		}*/
 
+		//used by index::a[index],so must be inited before backward
 		for (int i = 0; i < this->w_num; i++)
 		{
 			this->dw->push_back(0);

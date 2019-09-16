@@ -70,6 +70,14 @@ public:
 	int copynum = 0;
 	string con_name;
 	
+	void clear() {
+		if (device == 1)
+			cudaFree(this->x);
+		else
+			free(this->x);
+		free(x_stride);
+		free(x_dim);
+	}
 	//log ,exp.....
 	//typedef enum {
 	//	//cudnnReduceTensorOp_t
@@ -81,7 +89,6 @@ public:
 	//	CONS_SIN = 5,
 	//	CONS_EXP = 6,
 	//} gpu_math_op;
-
 	//partial derivative;
 	constant<T>* function_tensor(gpu_math_op math_op,T aphal,int pderi)
 	  {

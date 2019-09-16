@@ -37,6 +37,7 @@ typedef enum {
 	CONS_COS = 4,
 	CONS_SIN = 5,
 	CONS_EXP = 6,
+    CONS_REC = 7,//reciprocal=1/x
 } gpu_math_op;
 
 template <class value_type>

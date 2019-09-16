@@ -106,6 +106,15 @@ __global__ void exp_vector_kernel(int size, value_type *buffA)
 	buffA[idx] = expf(buffA[idx]);
 };
 
+template <class value_type>  //   buffA^aphal=x^a
+__global__ void rec_vector_kernel(int size, value_type *buffA)
+{
+	const int idx = BLOCK_SIZE * blockIdx.x + threadIdx.x;
+	if (idx >= size) {
+		return;
+	}
+	buffA[idx] = fdividef((value_type)1.0,buffA[idx]);
+};
 
 
 template <class value_type>
@@ -146,8 +155,13 @@ void math_vector_gpu(gpu_math_op math_op,int size, value_type *buffA,value_type 
 		checkCudaErrors(cudaDeviceSynchronize());
 		break;
 	case 6:
-		cudnn_op_math = CONS_EXP;//only A useed ,eg::5=> -5+1= -4
+		cudnn_op_math = CONS_EXP;//
 		exp_vector_kernel<value_type> << <grid_size, BLOCK_SIZE >> > (size, buffA);
+		checkCudaErrors(cudaDeviceSynchronize());
+		break;
+	case 7:
+		cudnn_op_math = CONS_REC;//1/x,x!=0
+		rec_vector_kernel<value_type> << <grid_size, BLOCK_SIZE >> > (size, buffA);
 		checkCudaErrors(cudaDeviceSynchronize());
 		break;
 	default:
@@ -227,6 +241,16 @@ __global__ void dexp_vector_kernel(int size, value_type *buffA)
 	buffA[idx] = expf(buffA[idx]);
 };
 
+template <class value_type>  //   buffA^aphal=x^a
+__global__ void drec_vector_kernel(int size, value_type *buffA)
+{
+	const int idx = BLOCK_SIZE * blockIdx.x + threadIdx.x;
+	if (idx >= size) {
+		return;
+	}
+	buffA[idx] = -fdividef(value_type(1.0), buffA[idx] * buffA[idx]);
+};
+
 //typedef enum {
 //	//cudnnReduceTensorOp_t
 //	CONS_LOG = 0,
@@ -281,6 +305,10 @@ void dmath_vector_gpu(gpu_math_op math_op, int size, value_type *buffA, value_ty
 		dexp_vector_kernel<value_type> << <grid_size, BLOCK_SIZE >> > (size, buffA);
 		checkCudaErrors(cudaDeviceSynchronize());
 		break;
+	case 7:
+		cudnn_op_math = CONS_REC;//1/x,x!=0
+		drec_vector_kernel<value_type> << <grid_size, BLOCK_SIZE >> > (size, buffA);
+		checkCudaErrors(cudaDeviceSynchronize());
 	default:
 		cout << "wrong constant<T> math op type " << endl;
 	}
