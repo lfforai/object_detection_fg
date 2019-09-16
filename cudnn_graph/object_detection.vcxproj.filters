@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="main.cu" />
+    <CudaCompile Include="fp16_dev.cu">
+      <Filter>half16</Filter>
+    </CudaCompile>
+    <CudaCompile Include="gpumathtool.cu">
+      <Filter>gpu_math_tool</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="constant_class.cuh">
+      <Filter>constant_weigh</Filter>
+    </ClInclude>
+    <ClInclude Include="weigh_class.cuh">
+      <Filter>constant_weigh</Filter>
+    </ClInclude>
+    <ClInclude Include="base_op.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="graph_active_threads.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="test_tool.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="hash_global.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="sum_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
+    <ClInclude Include="error_util.h">
+      <Filter>half16</Filter>
+    </ClInclude>
+    <ClInclude Include="fp16_dev.h">
+      <Filter>half16</Filter>
+    </ClInclude>
+    <ClInclude Include="fp16_emu.h">
+      <Filter>half16</Filter>
+    </ClInclude>
+    <ClInclude Include="gpumathtool.cuh">
+      <Filter>gpu_math_tool</Filter>
+    </ClInclude>
+    <ClInclude Include="x_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
+    <ClInclude Include="div_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
+    <ClInclude Include="exp_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="constant_weigh">
+      <UniqueIdentifier>{6b6cb4d3-f54f-447d-b0ee-eb6ceb21eb08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base">
+      <UniqueIdentifier>{c8210486-e102-4e28-9a89-aff1fe291469}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tool">
+      <UniqueIdentifier>{b9f15906-caf3-47cf-b02e-40098f5e623d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ops_class">
+      <UniqueIdentifier>{cb4cbc22-4055-4907-93e0-5af7d722e100}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="half16">
+      <UniqueIdentifier>{2dcac3b8-03d9-44ac-8c13-84b271bbe3a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gpu_math_tool">
+      <UniqueIdentifier>{fd0e58cb-8d25-4e93-afd0-217fdb43d2af}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="fp16_emu.cpp">
+      <Filter>half16</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
