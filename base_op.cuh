@@ -84,6 +84,7 @@ class base_op{
 
 	 //-1:sons not ready,1:sons not ready
 	 inline int if_sons_ready_backward() {
+		 cout<<"if son::"<<this->name_of_op<<endl;
 		 int result = 1;
 		 if (this->sons.empty())
 		 {
@@ -252,31 +253,36 @@ class base_op{
 
 
 	void initvector(){
-		//used by index::a[index],so must be inited before backward
-		for (int i = 0; i < this->xdx_num; i++)
+		if (this->neededBackwark_dx == true)
 		{
-			this->x->push_back(0);
-			this->dx->push_back(0);
+			//used by index::a[index],so must be inited before backward
+			for (int i = 0; i < this->xdx_num; i++)
+			{
+				this->x->push_back(0);
+				this->dx->push_back(0);
+			}
 		}
-
 		//used by pushback::a.pushback,so not need to be inited befor backward
 	/*	for (int i = 0; i < this->ydy_num; i++)
 		{
 			this->dy->push_back(0);
 		}*/
 
-		//used by index::a[index],so must be inited before backward
-		for (int i = 0; i < this->w_num; i++)
-		{
-			this->dw->push_back(0);
+		if (this->neededBackwark_dw == true)
+		{   //used by index::a[index],so must be inited before backward
+			for(int i = 0; i < this->w_num; i++)
+			   {
+				this->dw->push_back(0);
+			   }
 		}
 	}
 
 	//init all w,dw,x,xd,y,dy
-	void initparameter(){
-		//cout<<this->name_of_op<<" init"<<endl;
+	void initparameter()
+	{
+		cout<<this->name_of_op<<" init"<<endl;
 		//self------------------------------excharge-------------------------fahter
-		//printf("father num:%d \n", this->xdx_num);
+		printf("father num:%d \n", this->fathers.size());
 		for (int i = 0; i < this->fathers_num; i++)
 		{
 			vector<string>::iterator ite1 = find(((base_op<T>*)(this->fathers[i]))->sons_name.begin(), ((base_op<T>*)(this->fathers[i]))->sons_name.end(), this->name_of_op);
@@ -287,19 +293,19 @@ class base_op{
 			((base_op<T>*)(this->fathers[i]))->dy->push_back((*(this->dx))[i]);
 		}
 
-		//printf("sons num:%d \n", this->sons_num);
+		printf("sons num:%d \n", this->sons.size());
 		//self------------------------------excharge-------------------------son
 		for (int i = 0; i < this->sons_num; i++)
 		{   //find the index of sons->father
 			vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
 			int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
-			//son->x=self->y
-			(*(((base_op<T>*)(this->sons[i]))->x))[index] = this->y;
-
+			cout<<"index:"<<index<<endl;
+			(*(((base_op<T>*)(this->sons[i]))->x))[index] = this->y; //
+		
 			//self->dy=son->dx
 			this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
 		}
-		//cout << "initparameter over" << endl;
+		cout << "initparameter over" << endl;
 	}
 
 	//run forward mark=0,else mark=1 run backward

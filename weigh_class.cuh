@@ -26,9 +26,11 @@
 #include "constant_class.cuh"
 #include <windows.h>
 #include <wincrypt.h>
+
 using namespace std;
 #ifndef _WEIGH_CLASS_CUH
 #define _WEIGH_CLASS_CUH 
+
 template<class T>
 class variable:public constant<T>
 {
@@ -36,6 +38,7 @@ private:
 public:
 	bool trainable=true;
 	string var_name;
+
 	//init in cpu=0,init in gpu=1
 	variable(){};
 	variable(bool trainble_o,string con_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
@@ -70,11 +73,11 @@ public:
 		}
 	}
 
-	static variable<T>* getObject(bool trainble_o,string con_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src)
+	static variable<T>* getObject(bool trainble_o,string var_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src)
 	{
 		variable<T>* r = new variable<T>;
 		r->trainable= trainble_o;
-		r->var_name = con_name_o;
+		r->var_name = var_name_o;
 		r->device = device_o;
 		r->x_dim_num = x_dim_num_o;
 

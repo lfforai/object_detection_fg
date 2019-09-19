@@ -32,6 +32,8 @@ using namespace std;
 
 #ifndef _CONSTANT_CLASS_CUH
 #define _CONSTANT_CLASS_CUH
+
+
 typedef enum{
 	CONSTANT_OP_ADD = 0,
 	CONSTANT_OP_MUL = 1,
