@@ -101,9 +101,9 @@ void test() {
 	avector.push_back("b");
 	avector.push_back("c");
 	avector.push_back("d");
-	vector<string>::iterator ite = find(avector.begin(), avector.end(), "d");
+	vector<string>::iterator ite = find(avector.begin(), avector.end(), "a");
 	int index = (int)std::distance(std::begin(avector), ite);
 	printf("index:=%d \n", index);
-	avector[3] = "w";
+	//avector[3] = "w";
 
 }

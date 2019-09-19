@@ -33,16 +33,38 @@
 
 
 using namespace std;
-#ifndef _SUM_OP_CUH
-#define _SUM_OP_CUH
+#ifndef _X_OP_CUH
+#define _X_OP_CUH
 
 //all varible and constant must be init by x_op
 template<class T>
-class x_op :public base_op<T>
+class x_op:public base_op<T>
 {
 public:
+	//one constant,alpha=1
+	static x_op<T>*  convert_cons_to_x_op(string cons_name_o,int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
+		constant<T>* thisobj=constant<T>::getObject(cons_name_o, device_o, x_dim_num_o, x_dim_o, x_src);
+		T alpha_o;
+		vector<constant<T>*>* vector_temp = new vector<constant<T>*>;
+		vector_temp->push_back(thisobj);
+		x_op<T>* result = x_op<T>::getconObejct(vector_temp, 1, cons_name_o);
+		return result;
+	};
+
+	//one variable,alpha=1
+	static x_op<T>*  convert_var_to_x_op(bool trainble_o, string var_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
+		variable<T>* thisobj= variable<T>::getObject(trainble_o, var_name_o,device_o,x_dim_num_o,x_dim_o, x_src);
+		T alpha_o;
+		vector<variable<T>*>* vector_temp = new vector<variable<T>*>;
+		vector_temp->push_back(thisobj);
+		x_op<T>* result = x_op<T>::getvarObejct(vector_temp, 1,var_name_o);
+		return result;
+	};
+
+
 	//y=alpha*x
-	static x_op<T>* getObejct(vector<constant<T>*>* constant_N_o,T alpha_o, string name_o)
+	//vector constant
+	static x_op<T>* getconObejct(vector<constant<T>*>* constant_N_o,T alpha_o, string name_o)
 	{   //constant_N_o.size()==1
 		x_op<T>* result = new x_op<T>;
 		result->alpha = alpha_o;
@@ -51,6 +73,11 @@ public:
 		result->cons_num = constant_N_o->size();
 		result->neededBackwark_dw=false;
 		result->neededBackwark_dx = false;
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
+
 
 		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
 		{
@@ -62,14 +89,19 @@ public:
 		return result;
 	}
 
+
 	//y=alpha*x
-	static x_op<T>* getObejct(vector<varialbe<T>*>* w_o, T alpha_o, string name_o)
+	//veector varible
+	static x_op<T>* getvarObejct(vector<variable<T>*>* w_o, T alpha_o, string name_o)
 	{   //w_o.size()==1
 		x_op<T>* result = new x_op<T>;
 		result->alpha = alpha_o;
 		result->name_of_op = name_o;
 		result->w = w_o;
 		result->w_num= w_o->size();
+		result->x = new vector<constant<T>*>;
+		result->dx = new vector<constant<T>*>;
+		result->dy = new vector<constant<T>*>;
 		
 		result->neededBackwark_dx = false;
 
@@ -80,35 +112,47 @@ public:
 			if ((*iter)->trainable == true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
 				base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
 		}
-
+		result->dw = new vector<variable<T>*>;
 		x_op<T>::global_graph->insert_v(result->name_of_op, result);
 		return result;
 	}
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
-	void backward_function() {
+	virtual void backward_function(){
+
 		//transport dy to dx
+		T apla2 = 1;
+		T beta = 1;
 		if(this->neededBackwark_dw==true);
-		{  this->sum_dy();
-		   this->dw = this->dy_sum->scala_mul(this->alpha);
+		{  //self------------------------------excharge-------------------------son
+			for (int i = 0; i < this->sons_num; i++)
+			{   //find the index of sons->father
+				vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
+				int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
+				//self->dy=son->dx
+				this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
+			}
+			
+		   this->sum_dy();
+		   constant<T>::op_math(CONSTANT_OP_ADD,(*this->dw)[0],this->dy_sum,(*this->dw)[0], &this->alpha, &apla2, &beta);
 		}
 		backward_over = 1;
-		cout <<"backward::"<<this->name_of_op << endl;
+		cout << "backward::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
-	void forward_function() 
+	virtual void forward_function() 
 	   { //from this->x computer this->y
-		if (result->neededBackwark_dw == false)
+		if (this->neededBackwark_dw == false)
 		{   //input is constant
 			this->y = ((constant<T>*)((*(this->cons))[0]))->scala_mul(this->alpha);
 		}
 		else {
-			//input is varible
-			this->y = ((constant<T>*)((*(this->w))[0]))->scala_mul(this->alpha);
+			//input is variable
+			this->y = ((variable<T>*)((*(this->w))[0]))->scala_mul(this->alpha);
 		}
-		 forward_over = 1;
-		 cout <<"forward::"<<this->name_of_op << endl;
+		forward_over = 1;
+		cout << "forward::" << this->name_of_op <<" y:"<<this->y->x[0]<<endl;
 	   }
 };
 #endif // !_SUM_OP_CUH

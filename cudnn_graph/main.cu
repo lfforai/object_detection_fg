@@ -15,94 +15,55 @@
 #include <thread>
 #include "graph_active_threads.cuh"
 #include "test_tool.h"
-#include "sum_op.cuh"
+
 
 #include "constant_class.cuh"
 #include "weigh_class.cuh"
+#include "x_op.cuh"
+#include "exp_op.cuh"
+#include "sum_op.cuh"
+#include "div_op.cuh"
+#include "mul_op.cuh"
+
+
 using namespace std;
-
-
 int main()
 {
-	//int *src = (int *)malloc(3 * 6 * 4 * 2 * sizeof(int));
-	//int dim[4] = { 3,6,4,2 };
-	//constant<int>*  con1=constant<int>::getObject("con1",0, 4, dim, src);
-	//constant<int>*  con2 = constant<int>::getObject("con2", 0, 4, dim, src);
-	//variable<int>*  w1 = variable<int>::getObject(true,"w1", 0, 4, dim, src);
-	//variable<int>*  w2 = variable<int>::getObject(true,"w2", 0, 4, dim, src);
-	//vector<constant<int>*>* cons_vector = new vector<constant<int>*>;
-	//vector<variable<int>*>* w_vector = new vector<variable<int>*>;
-	//cons_vector->push_back(con1);
-	//cons_vector->push_back(con2);
-	//w_vector->push_back(w1);
-	//w_vector->push_back(w2);
+	int dim[4] = { 1,1,1,1 };
+	float src[1] = { 5.0 };
+	float a[1] = { 2.0 };
+	float one_v[1] = { 1.0 };
+	
+	//init graph
+	base_op<float>::global_graph = new graph<float, base_op>;
+    base_op<float>::global_w_trainable = new graph<float, variable>;
+	base_op<float>::global_placehold_constant = new graph<float, constant>;
 
- //   base_op<int>::global_graph = new graph<int, base_op>;
-	//base_op<int>::global_w_trainable = new graph<int, variable>;
-	////base_op<int>* addnew =sum_op<int>::getObejct(cons_vector, "addnew");
-	////graph<int, base_op>* global_graph = new graph<int, base_op>;
-	//base_op<int>* add = base_op<int>::getObejct(cons_vector,"add");
- //   base_op<int>* sub = base_op<int>::getObejct(cons_vector, "sub");
-	//base_op<int>* mul = base_op<int>::getObejct(cons_vector, "mul");
-	//base_op<int>* log = base_op<int>::getObejct(add,sub,cons_vector,w_vector,"log");
-	//base_op<int>* exp = base_op<int>::getObejct(mul, cons_vector, w_vector, "exp");
-	//base_op<int>* log_sub = base_op<int>::getObejct(log,sub, cons_vector, w_vector, "log_sub");
-	//base_op<int>* log_exp = base_op<int>::getObejct(log, exp, cons_vector, w_vector, "log_exp");
-	//base_op<int>* soft_max = base_op<int>::getObejct(log_sub, log_exp, cons_vector, w_vector,  "soft_max");
-	//base_op<int>* cross_entry = base_op<int>::getObejct(soft_max, log_exp, cons_vector, "cross_entry");
-	//
-	////base_op<int>::global_graph->allvalue();
-	////active graph
-	//graph_active<int>* gc = graph_active<int>::getobject(base_op<int>::global_graph);
-	//cout<<"forward start"<<endl;
-	//gc->forward_start(1);
-	//cout <<"backward start"<< endl;
- //   gc->backward_start(1);
-
-	//varible out
-	//base_op<int>::global_w_trainable->allvalue();
-	//test();
+    //graph_create
+	base_op<float>*  two_con= x_op<float>::convert_cons_to_x_op("a", 1, 4, dim, a);
+	base_op<float>*  X_var = x_op<float>::convert_var_to_x_op(true,"X", 1,4, dim, src);
+	base_op<float>*  one_con = x_op<float>::convert_cons_to_x_op("1", 1, 4, dim, one_v);
     
-	int dim[4] = {1,1,2,4};
-	int dimC[4] = {1,1,3,1};
-	float src[8] = { 4.0,1.0,1.0,3.0,1.0,2.0,2.0,3.0 };
-	float srcC[4] ={ 3.0,2.0,1.0};
-	constant<float>*  A = constant<float>::getObject("A", 1, 4, dim, src);
-	constant<float>*  C = constant<float>::getObject("C", 1, 4, dim, src);
-	variable<float>*  B = variable<float>::getObject(true,"B", 1, 4, dimC, srcC);
-	float bate = 2.0;
-	constant<float>* D= A->scala_mul(bate);
-	cout<<D->con_name<<endl;
-	constant<float>* D1=D->function_tensor(CONS_LOG,1.0,1);
-	cout<<D1->con_name<<endl;
+	//put into ops
+	base_op<float>* x_1 = sum_op<float>::getObejct(one_con, 1.0, -1.0, X_var, "1-x|");
+	base_op<float>* exp_2 = exp_op<float>::getObejct(X_var,2.0,"2*e^x|");
+	base_op<float>* x_1_2_exp = mul_op<float>::getObejct(exp_2,1.0,x_1,"2*(1-x)*e^x|");
 
-	//float ap0=1.0;
-	//float ap1=0.0;
-	//float beta=0.0;
-	//CONSTANT_OP_ADD = 0,
-	//	CONSTANT_OP_MUL = 1,
-	//	CONSTANT_OP_TENSOR_MIN = 2,
-	//	CONSTANT_OP_TENSOR_MAX = 3,
-	//	CONSTANT_OP_TENSOR_SQRT = 4,
-	//	CONSTANT_OP_TENSOR_NOT = 5,
-	//constant<float>::op_math(CONSTANT_OP_ADD,A, B, C,&ap0,&ap0,&beta);
+	base_op<float>* x_add_1 = sum_op<float>::getObejct(one_con, 1.0, 1.0, X_var, "1+x|");
+	base_op<float>* exp_1 = exp_op<float>::getObejct(X_var, 1.0, "1*e^x|");
+	base_op<float>* x_add_1_1_exp = mul_op<float>::getObejct(exp_1, 1.0, x_add_1,"(1+x)*e^x");
+	base_op<float>* x_2= sum_op<float>::getObejct(two_con, 1.0, 1.0, X_var, "2+x|");
 
-	//cudnnReduceTensorOp_t
-	//  CONS_REDUCE_TENSOR_ADD = 0,
-	//	CONS_REDUCE_TENSOR_MUL = 1,
-	//	CONS_REDUCE_TENSOR_MIN = 2,
-	//	CONS_REDUCE_TENSOR_MAX = 3,
-	//	CONS_REDUCE_TENSOR_AMAX = 4,
-	//	CONS_REDUCE_TENSOR_AVG = 5,
-	//	CONS_REDUCE_TENSOR_NORM1 = 6,
-	//	CONS_REDUCE_TENSOR_NORM2 = 7,
-	//	CONS_REDUCE_TENSOR_MUL_NO_ZEROS = 8,
-	//int* result = (int*)malloc(2*sizeof(int));
-	//constant<float>::op_math_reduce(CONS_REDUCE_TENSOR_NORM2, A, C, &ap0, &beta,result);
-	//cout<<result[0]<<endl;
-	//cout<<result[1]<<endl;
-	//constant<float>::add(C, B, C, &ap0, &ap0, &beta);
-	//int a;
+	base_op<float>* x_add_1_1_exp_x_2= sum_op<float>::getObejct(x_add_1_1_exp, 1.0, 1.0, x_2, "2+x+(1+x)*e^x|");
+
+	base_op<float>* last = div_op<float>::getObejct(x_1_2_exp, 1.0, x_add_1_1_exp_x_2,"last");
+
+	//active 
+	graph_active<float>* graph_ac=graph_active<float>::getobject(base_op<float>::global_graph);
+	graph_ac->forward_start(0);
+	//if (two_con->sons.empty());
+	//cout << "empty" << endl;
+	graph_ac->backward_start(0);
 	return 0;
 }
 

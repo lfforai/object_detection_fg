@@ -76,33 +76,51 @@ public:
 	}
 	
 	//reload the backward_function,make sure last of the function must be backward_over = 1
-    void backward_function(){
+  virtual  void backward_function(){
 		//transport dy to dx
+		for (int i = 0; i < this->sons_num; i++)
+		{   //find the index of sons->father
+			vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
+			int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
+			
+			//self->dy=son->dx
+			this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
+		}
+
 		this->sum_dy();
 		int i = 0;
+		
+		
 		for (typename vector<constant<T>*>::const_iterator iter = this->dx->cbegin(); iter != this->dx->cend(); iter++)
 		{     //iter is a father->xd;
 			if (i == 0)
 			{
-				(*iter) = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla_sum1);
+				(constant<T>*)(*iter) = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla_sum1);
 				i += 1;
 			}
 			if (i == 1)
-				(*iter) = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla_sum2);
+				(constant<T>*)(*iter) = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla_sum2);
 		}
+
 		backward_over = 1;
 		cout <<"backward::"<<this->name_of_op << endl;
 	}
 	
 	//reload the forward_function,make sure last of the function must be forward_over = 1
-	void forward_function(){
+  virtual void forward_function(){
 		//from this->x computer this->y
 		int i = 0;
 		T beta = 0;
+		for (int i = 0; i < this->fathers_num; i++)
+		{
+			//self->x=father->y::fathers y be converted to this->x ,vector<constant<T>*>* x , vector<base_op<T>*> fathers
+			(*(this->x))[i] = ((base_op<T>*)(this->fathers[i]))->y;
+		}
+
 		for(typename vector<constant<T>*>::const_iterator iter = this->x->cbegin(); iter != this->x->cend(); iter++)
 		  { //assume op1.y.size==op2.y.size     
 			if(i == 0)
-			  { ((constant<T>*)(this->y))=((constant<T>*)(*iter));
+			  { ((constant<T>*)(this->y))=((constant<T>*)(*iter))->copy();
 				i += 1;
 			  }
 			else
@@ -110,8 +128,9 @@ public:
 				constant<T>::op_math(CONSTANT_OP_ADD,((constant<T>*)(this->y)),((constant<T>*)(*iter)),((constant<T>*)(this->y)), &this->aphla_sum1, &this->aphla_sum2, &beta);
 			 }
 		  }
+
 		forward_over = 1;
-		cout <<"forward::"<<this->name_of_op << endl;
+		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
 	}
 };
 #endif // !_SUM_OP_CUH

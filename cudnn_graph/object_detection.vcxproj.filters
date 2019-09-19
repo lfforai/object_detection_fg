@@ -52,6 +52,15 @@
     <ClInclude Include="exp_op.cuh">
       <Filter>ops_class</Filter>
     </ClInclude>
+    <ClInclude Include="sin_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
+    <ClInclude Include="cos_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
+    <ClInclude Include="mul_op.cuh">
+      <Filter>ops_class</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="constant_weigh">

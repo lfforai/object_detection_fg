@@ -71,19 +71,19 @@ public:
 		}
 	}
 
-	void init_parameter() {
-		vector<string> keys = this->graph_global_active->allKeys();
-		for(typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
-		   {
-			  ((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initparameter();
-		   }
-	}
+	//void init_parameter() {
+	//	vector<string> keys = this->graph_global_active->allKeys();
+	//	for(typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
+	//	   {
+	//		  ((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initparameter();
+	//	   }
+	//}
 
 	void forward_function(int id){
 		vector<string> v_1;
 		v_1.assign(this->forwardkeys.begin(), this->forwardkeys.end());
-		//cout << "my id :" << id << endl;
-		//ShowVec(v_1);
+		cout << "my id :" << id << endl;
+		ShowVec(v_1);
 
 		int n=0;//random num;
 		int mark;// return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
@@ -95,14 +95,15 @@ public:
 			  if (n > size_now - 1)
 				  n = 0;
 		      if(size_now>1)
-				  { 
+				  {
+				
 				    // return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
 				    mark=this->graph_global_active->un_map[v_1[n]]->if_forward_start_run();
 					if (mark == 1)//run op forward
 					   {this->graph_global_active->un_map[v_1[n]]->ward_run(0);
-						 v_1.erase(v_1.begin()+n);
-						 size_now = v_1.size();//aftering be removed the value,charge size of the vector 
-						 n = 0;
+						v_1.erase(v_1.begin()+n);
+						size_now = v_1.size();//aftering be removed the value,charge size of the vector 
+						n = 0;
 					   }
 					else if(mark== 0)// give up the op
 					{
@@ -192,7 +193,8 @@ public:
 		if (this->mark_InitParameter == 0)
 		{
 			this->init_vector();
-			this->init_parameter();
+			this->mark_InitParameter == 1;
+			cout<<"init_vector over"<<endl;
 		}
 		this->activeThreadsNum = this->MaxThreadsNum;
 		if (UseMulThread == 1){//use mulity threads
