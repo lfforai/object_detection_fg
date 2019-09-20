@@ -38,6 +38,29 @@ private:
 public:
 	bool trainable=true;
 	string var_name;
+	variable<T>* copy()
+	{
+		this->copynum += 1;
+		variable<T>* result = variable<T>::getObject(this->trainable,this->var_name + "_" + to_string(this->copynum), this->device, this->x_dim_num, this->x_dim, this->x);
+		return result;
+	}
+
+	variable<T>* copy_zero() //only copy dim_num ,dim,set all x=0
+	{
+		int length = this->x_stride[0] * this->x_dim[0];
+		this->copynum += 1;
+		T* temp;
+		if (this->device == 1)//on gpu
+		{    
+			checkCudaErrors(cudaMallocManaged((void**)&temp, length * sizeof(T)));
+			checkCudaErrors(cudaMemset(temp, 0, sizeof(T)*length));
+		}else{
+			temp = (T*)malloc(length * sizeof(T));
+			memset(temp,0, length * sizeof(T));
+		}
+		variable<T>* result = variable<T>::getObject(this->trainable,this->con_name + "_" + to_string(this->copynum), this->device, this->x_dim_num, this->x_dim, temp);
+		return result;
+	}
 
 	//init in cpu=0,init in gpu=1
 	variable(){};

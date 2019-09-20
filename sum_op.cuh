@@ -77,6 +77,7 @@ public:
 	
 	//reload the backward_function,make sure last of the function must be backward_over = 1
   virtual  void backward_function(){
+	    //cout << "backward start::" << this->name_of_op << endl;
 		//transport dy to dx
 		for (int i = 0; i < this->sons_num; i++)
 		{   //find the index of sons->father
@@ -89,8 +90,7 @@ public:
 
 		this->sum_dy();
 		int i = 0;
-		
-		
+
 		for (typename vector<constant<T>*>::const_iterator iter = this->dx->cbegin(); iter != this->dx->cend(); iter++)
 		{     //iter is a father->xd;
 			if (i == 0)
@@ -103,7 +103,7 @@ public:
 		}
 
 		backward_over = 1;
-		cout <<"backward::"<<this->name_of_op << endl;
+		//cout <<"backward::"<<this->name_of_op << endl;
 	}
 	
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -130,7 +130,7 @@ public:
 		  }
 
 		forward_over = 1;
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
 	}
 };
 #endif // !_SUM_OP_CUH

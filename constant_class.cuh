@@ -41,8 +41,7 @@ typedef enum{
 	CONSTANT_OP_TENSOR_MAX = 3,
 	CONSTANT_OP_TENSOR_SQRT = 4,
 	CONSTANT_OP_TENSOR_NOT = 5,
-		} constant_math_op;
-
+} constant_math_op;
 
 typedef enum {
 	//cudnnReduceTensorOp_t
@@ -96,8 +95,8 @@ public:
 	  {
 		constant<T>* result =this->copy();
 		int len= result->x_stride[0] * result->x_dim[0];
-		if(pderi == 0)  //ong
-		   math_vector_gpu(math_op, len, result->x, aphal);
+		if (pderi == 0)  //ong-
+			math_vector_gpu(math_op, len, result->x, aphal);
 		if(pderi == 1) //partial derivative
 		   dmath_vector_gpu(math_op, len, result->x, aphal);
 		return  result;
@@ -307,7 +306,7 @@ public:
 	{
 		if (A->device == 0 || B->device == 0 || C->device == 0)
 		{   printf("constant->x must be localed on gpu!");
-			exit(0);
+			//exit(0);
 		}
 		cudnnOpTensorOp_t cudnn_op_math;
 
@@ -333,6 +332,7 @@ public:
 			break;
 		default:
 			cout << "wrong constant<T> math op type " << endl;
+			exit(0);
 		}
 
 		cudnnHandle_t handle_;
@@ -394,7 +394,7 @@ public:
 			alpha1,
 			cudnnDescA,
 			A->x,
-			(const void*)alpha2,
+			alpha2,
 			cudnnDescB,
 			B->x,
 			beta,

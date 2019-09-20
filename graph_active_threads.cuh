@@ -82,8 +82,8 @@ public:
 	void forward_function(int id){
 		vector<string> v_1;
 		v_1.assign(this->forwardkeys.begin(), this->forwardkeys.end());
-		cout << "my id :" << id << endl;
-		ShowVec(v_1);
+		//cout << "my id :" << id << endl;
+		//ShowVec(v_1);
 
 		int n=0;//random num;
 		int mark;// return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
@@ -263,6 +263,7 @@ public:
 		
 		//thread nums
 		int maxthreadnum = object_ga->CatchCpuThreadsMaxNum();
+		cout<<"cpu max thread::"<<maxthreadnum <<endl;
 		object_ga->MaxThreadsNum = (maxthreadnum>1)?(int)(maxthreadnum/2):1; //use half threadnum 
 		object_ga->activeThreadsNum=object_ga->MaxThreadsNum;
 		

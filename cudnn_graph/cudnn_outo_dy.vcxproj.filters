@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="main.cu" />
+    <CudaCompile Include="fp16_dev.cu">
+      <Filter>fp16</Filter>
+    </CudaCompile>
+    <CudaCompile Include="gpumathtool.cu">
+      <Filter>gpu_tool</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="exp_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="div_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="sum_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="x_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="cos_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="sin_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="mul_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="base_op.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="constant_class.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="weigh_class.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="fp16_dev.h">
+      <Filter>fp16</Filter>
+    </ClInclude>
+    <ClInclude Include="fp16_emu.h">
+      <Filter>fp16</Filter>
+    </ClInclude>
+    <ClInclude Include="error_util.h">
+      <Filter>fp16</Filter>
+    </ClInclude>
+    <ClInclude Include="gpumathtool.cuh">
+      <Filter>gpu_tool</Filter>
+    </ClInclude>
+    <ClInclude Include="test_tool.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="graph_active_threads.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="hash_global.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="op">
+      <UniqueIdentifier>{6dfdf1db-1461-42f2-aa05-648fde9a04b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="base">
+      <UniqueIdentifier>{c916bc0e-1eec-4743-9808-2284c90bdd30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fp16">
+      <UniqueIdentifier>{8f9ff3ff-8674-4caa-9bb1-6363279b6024}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gpu_tool">
+      <UniqueIdentifier>{e677dc5d-8e47-4149-9636-9b25b1a867d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{bed02423-d4a3-4523-9f49-90e70e672c27}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="fp16_emu.cpp">
+      <Filter>fp16</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

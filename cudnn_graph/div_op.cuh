@@ -49,7 +49,7 @@ public:
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
 		result->dw = new vector<variable<T>*>;
-
+		
 		result->fathers.push_back(op1);
 		result->fathers_name.push_back(op1->name_of_op);
 		result->fathers.push_back(op2);
@@ -73,43 +73,71 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
-		cout << "backward start::" << this->name_of_op << endl;
+		//cout << "backward start::" << this->name_of_op << endl;
 		//transport dy to dx
-		for (int i = 0; i < this->sons_num; i++)
-		{   //find the index of sons->father
-			vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
-			int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
+		if (this->sons_num > 0) // have sons
+		{
+			for (int i = 0; i < this->sons_num; i++)
+			{   //find the index of sons->father
+				vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
+				int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
 
-			//self->dy=son->dx
-			this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
-		}
+				//self->dy=son->dx
+				this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
+			}
+			this->sum_dy();
 
-		this->sum_dy();
-		T beta = 0;
-		T apla1 = 1.0;
-		T apla2 = 1.0;
-		int len=(vector<constant<T>*>(*this->dx)).size();
-		for (int i=0;i<len;i++)
-		{     //iter is a father->xd;
-			if(i == 1)
-			 {   
-				constant<T>* temp_const = ((constant<T>*)(*(this->x))[1])->function_tensor(CONS_REC, 1, 1);
-				constant<T>::op_math(CONSTANT_OP_MUL, temp_const,this->dy_sum, this->dy_sum, &apla1, &apla2, &beta);
-				(vector<constant<T>*>(*this->dx))[i] = ((constant<T>*)(this->dy_sum))->scala_mul(this->alpha);
-				temp_const->clear();
-			 }
+			T beta = 0;
+			T apla1 = 1.0;
+			T apla2 = 1.0;
 
-			if (i == 0)
-			{
-				constant<T>* temp_const = ((constant<T>*)(*(this->x))[1])->function_tensor(CONS_REC, 1, 0);
-				constant<T>::op_math(CONSTANT_OP_MUL, temp_const,this->dy_sum, this->dy_sum, &apla1, &apla2, &beta);
-				(vector<constant<T>*>(*this->dx))[i] = ((constant<T>*)(this->dy_sum))->scala_mul(this->alpha);
-				temp_const->clear();
+			int len = (vector<constant<T>*>(*this->dx)).size();
+			for (int i = 0; i < len; i++)
+			{     //iter is a father->xd;
+				if (i == 1)
+				{
+					constant<T>* temp_const = ((constant<T>*)(*(this->x))[1])->function_tensor(CONS_REC, 1, 1);
+					constant<T>::op_math(CONSTANT_OP_MUL, temp_const, this->dy_sum, temp_const, &apla1, &apla2, &beta);
+					constant<T>::op_math(CONSTANT_OP_MUL, (constant<T>*)(*(this->x))[0],temp_const, temp_const, &apla1, &apla2, &beta);
+					(vector<constant<T>*>(*this->dx))[i] = ((constant<T>*)temp_const)->scala_mul(this->alpha);
+					temp_const->clear();
+				}
+
+				if (i == 0)
+				{
+					constant<T>* temp_const = ((constant<T>*)(*(this->x))[1])->function_tensor(CONS_REC, 1, 0);
+					constant<T>::op_math(CONSTANT_OP_MUL, temp_const, this->dy_sum, temp_const, &apla1, &apla2, &beta);
+					(vector<constant<T>*>(*this->dx))[i] = ((constant<T>*)(temp_const))->scala_mul(this->alpha);
+					temp_const->clear();
+				}
 			}
 		}
+		else //no sons
+	   {
+			T beta = 0;
+			T apla1 = 1.0;
+			T apla2 = 1.0;
 
+			int len = (vector<constant<T>*>(*this->dx)).size();
+			for (int i = 0; i < len; i++)
+			{     //iter is a father->xd;
+				if (i == 0)
+				{   constant<T>* temp_const =(*this->x)[1]->function_tensor(CONS_REC, 1, 0);
+					(*this->dx)[i] = temp_const->scala_mul(this->alpha);
+					temp_const->clear();
+				}
+
+				if (i == 1)
+				{
+					constant<T>* temp_const = (*this->x)[1]->function_tensor(CONS_REC, 1, 1);
+					constant<T>::op_math(CONSTANT_OP_MUL, temp_const,(*this->x)[0], temp_const, &apla1, &apla2, &beta);
+					(*this->dx)[i] = temp_const->scala_mul(this->alpha);
+					temp_const->clear();
+				}	
+			}
+		}
 		backward_over = 1;
-		cout << "backward end::" << this->name_of_op << endl;
+		//cout << "backward over::" << this->name_of_op << endl;
 	}
 	
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -126,13 +154,13 @@ public:
 			(*(this->x))[i] = ((base_op<T>*)(this->fathers[i]))->y;
 		}
 		                                                            //1 no use  //0 ,dy/dx==1
-		constant<T>* temp_const=((constant<T>*)(*(this->x))[1])->function_tensor(CONS_REC,1,0);
-		constant<T>::op_math(CONSTANT_OP_MUL,temp_const,(constant<T>*)(*(this->x))[0], temp_const, &apla1, &apla2, &beta);
+		constant<T>* temp_const=(*this->x)[1]->function_tensor(CONS_REC,1,0);
+		constant<T>::op_math(CONSTANT_OP_MUL,temp_const,(*this->x)[0], temp_const, &apla1, &apla2, &beta);
 		((constant<T>*)(this->y)) =temp_const->scala_mul(this->alpha);
 		temp_const->clear();
 	
 		forward_over = 1;
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
 	}
 };
 #endif // !_DIV_OP_CUH

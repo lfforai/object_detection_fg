@@ -61,7 +61,6 @@ public:
 		return result;
 	};
 
-
 	//y=alpha*x
 	//vector constant
 	static x_op<T>* getconObejct(vector<constant<T>*>* constant_N_o,T alpha_o, string name_o)
@@ -76,8 +75,6 @@ public:
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
-		result->dw = new vector<variable<T>*>;
-
 
 		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
 		{
@@ -88,7 +85,6 @@ public:
 		x_op<T>::global_graph->insert_v(result->name_of_op, result);
 		return result;
 	}
-
 
 	//y=alpha*x
 	//veector varible
@@ -102,13 +98,15 @@ public:
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
+		result->dw = new vector<variable<T>*>;
 		
 		result->neededBackwark_dx = false;
 
 		for (typename vector<variable<T>*>::const_iterator iter = w_o->cbegin(); iter != w_o->cend(); iter++)
 		{
-			if ((*iter)->trainable == true)
-				result->neededBackwark_dw = true;
+			if ((*iter)->trainable == false)
+				result->neededBackwark_dw = false;
+
 			if ((*iter)->trainable == true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
 				base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
 		}
@@ -119,11 +117,11 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function(){
-
+		//cout << "backward  start::" << this->name_of_op << endl;
 		//transport dy to dx
 		T apla2 = 1;
 		T beta = 1;
-		if(this->neededBackwark_dw==true);
+		if(this->neededBackwark_dw==true)
 		{  //self------------------------------excharge-------------------------son
 			for (int i = 0; i < this->sons_num; i++)
 			{   //find the index of sons->father
@@ -137,7 +135,7 @@ public:
 		   constant<T>::op_math(CONSTANT_OP_ADD,(*this->dw)[0],this->dy_sum,(*this->dw)[0], &this->alpha, &apla2, &beta);
 		}
 		backward_over = 1;
-		cout << "backward::" << this->name_of_op << endl;
+		//cout << "backward over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -152,7 +150,7 @@ public:
 			this->y = ((variable<T>*)((*(this->w))[0]))->scala_mul(this->alpha);
 		}
 		forward_over = 1;
-		cout << "forward::" << this->name_of_op <<" y:"<<this->y->x[0]<<endl;
+		//cout << "forward::" << this->name_of_op <<" y:"<<this->y->x[0]<<endl;
 	   }
 };
 #endif // !_SUM_OP_CUH

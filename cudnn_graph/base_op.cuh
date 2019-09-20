@@ -84,7 +84,7 @@ class base_op{
 
 	 //-1:sons not ready,1:sons not ready
 	 inline int if_sons_ready_backward() {
-		 cout<<"if son::"<<this->name_of_op<<endl;
+		 //cout<<"if son::"<<this->name_of_op<<endl;
 		 int result = 1;
 		 if (this->sons.empty())
 		 {
@@ -155,9 +155,8 @@ class base_op{
 
 	void sum_dy()
 	{//sum dy 
-		constant<T>* dy_sum=new constant<T>;
+		this->dy_sum=(*dy)[0];
 		int n = this->dy->size();
-		dy_sum = (*dy)[0];
 		if(n>1)
 		 {  int length = ((constant<T>*)(*dy)[0])->x_stride[0] * ((constant<T>*)(*dy)[0])->x_dim[0];
 			if(((constant<T>*)(*dy)[0])->device == 1) //data on gpu
@@ -262,17 +261,12 @@ class base_op{
 				this->dx->push_back(0);
 			}
 		}
-		//used by pushback::a.pushback,so not need to be inited befor backward
-	/*	for (int i = 0; i < this->ydy_num; i++)
-		{
-			this->dy->push_back(0);
-		}*/
 
 		if (this->neededBackwark_dw == true)
 		{   //used by index::a[index],so must be inited before backward
 			for(int i = 0; i < this->w_num; i++)
 			   {
-				this->dw->push_back(0);
+				this->dw->push_back(((variable<T>*)(*this->w)[i])->copy_zero());
 			   }
 		}
 	}

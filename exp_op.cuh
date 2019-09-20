@@ -45,7 +45,7 @@ public:
 		exp_op<T>* result = new exp_op<T>;
 		result->alpha = aphla_o;
 		result->name_of_op = name_o;
-		result->x = new vector<constant<T>*>;
+		result->x =  new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
 		result->dw = new vector<variable<T>*>;
@@ -66,6 +66,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
+		//cout << "backward start::" << this->name_of_op << endl;
 		//transport dy to dx
 		for (int i = 0; i < this->sons_num; i++)
 		{   //find the index of sons->father
@@ -73,7 +74,7 @@ public:
 			int index = (int)std::distance(std::begin(((base_op<T>*)(this->sons[i]))->fathers_name), ite1);
 
 			//self->dy=son->dx
-			this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
+			this->dy->push_back((*(this->sons[i])->dx)[index]);
 		}
 
 		this->sum_dy();
@@ -82,12 +83,12 @@ public:
 		T apla1 = 1.0;
 		T apla2 = 1.0;
 		
-		constant<T>* temp_const = ((constant<T>*)(*(this->x))[0])->function_tensor(CONS_EXP, 1, 1);
-		constant<T>::op_math(CONSTANT_OP_MUL, temp_const, this->dy_sum, this->dy_sum, &apla1, &apla2, &beta);
-		(*(this->dx))[0] = ((constant<T>*)(this->dy_sum))->scala_mul(this->alpha);
+		constant<T>* temp_const = ((*this->x)[0])->function_tensor(CONS_EXP, 1, 1);
+		constant<T>::op_math(CONSTANT_OP_MUL, temp_const, this->dy_sum, temp_const, &apla1, &apla2, &beta);
+		(*this->dx)[0] = temp_const->scala_mul(this->alpha);
 		temp_const->clear();
 		backward_over = 1;
-		cout << "backward::" << this->name_of_op << endl;
+		//cout << "backward over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -104,7 +105,7 @@ public:
 	
 		temp_const->clear();
 		forward_over = 1;
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
 	}
 };
 #endif

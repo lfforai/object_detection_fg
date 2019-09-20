@@ -75,6 +75,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
+		//cout << "backward start::" << this->name_of_op << endl;
 		//transport dy to dx
 		for (int i = 0; i < this->sons_num; i++)
 		{   //find the index of sons->father
@@ -84,6 +85,7 @@ public:
 			//self->dy=son->dx
 			this->dy->push_back((*(((base_op<T>*)(this->sons[i]))->dx))[index]);
 		}
+
 		int i = 0;
 		T aphla_mul = 1;
 		T beta_mul = 0;
@@ -91,24 +93,23 @@ public:
 
 		int len = (vector<constant<T>*>(*this->dx)).size();
 		for (int i = 0; i < len; i++)
-		{     //iter is a father->xd;
-			if (i == 1)
-			{
-				constant<T>::op_math(CONSTANT_OP_MUL, ((constant<T>*)(*(this->x))[0]), this->dy_sum, this->dy_sum, &this->alpha, &aphla_mul, &beta_mul);
-				(vector<constant<T>*>(*this->dx))[i] = ((constant<T>*)(this->dy_sum))->scala_mul(this->alpha);
-		
-			}
-
+		{    //iter is a father->xd;
 			if (i == 0)
 			{
-				constant<T>::op_math(CONSTANT_OP_MUL, ((constant<T>*)(*(this->x))[1]), this->dy_sum, this->dy_sum, &this->alpha, &aphla_mul, &beta_mul);
-				(vector<constant<T>*>(*this->dx))[i] = ((constant<T>*)(this->dy_sum))->scala_mul(this->alpha);
+				constant<T>::op_math(CONSTANT_OP_MUL,(*this->x)[1], this->dy_sum, (*this->x)[1], &this->alpha, &aphla_mul, &beta_mul);
+				(*this->dx)[i] = ((*this->x)[1])->scala_mul(this->alpha);
+			}
+
+			if (i == 1)
+			{
+				constant<T>::op_math(CONSTANT_OP_MUL,(*this->x)[0], this->dy_sum, (*this->x)[0], &this->alpha, &aphla_mul, &beta_mul);
+				(*this->dx)[i] = ((*this->x)[0])->scala_mul(this->alpha);
+		        
 			}
 		}
 		
-
 		backward_over = 1;
-		cout << "backward::" << this->name_of_op << endl;
+		//cout << "backward over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -135,7 +136,7 @@ public:
 			}
 		}
 		forward_over = 1;
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
 	}
 };
 #endif // !_SUM_OP_CUH

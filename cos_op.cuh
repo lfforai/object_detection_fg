@@ -43,7 +43,7 @@ public:
 	{
 		//assume size must be same
 		cos_op<T>* result = new cos_op<T>;
-		result->aphla = aphla_o;
+		result->alpha = aphla_o;
 		result->name_of_op = name_o;
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
@@ -66,6 +66,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
+		//cout << "backward start::" << this->name_of_op << endl;
 		for (int i = 0; i < this->sons_num; i++)
 		{   //find the index of sons->father
 			vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
@@ -76,17 +77,17 @@ public:
 		}
 		//transport dy to dx
 		this->sum_dy();
-		int i = 0;
+
 		T beta = 0;
 		T apla1 = 1.0;
 		T apla2 = 1.0;
 
-		constant<T>* temp_const = ((constant<T>*)(*(this->x))[1])->function_tensor(CONS_COS, 1, 1);
-		constant<T>::op_math(CONSTANT_OP_MUL, temp_const, this->dy_sum, this->dy_sum, &apla1, &apla2, &beta);
-		(*(this->dx))[0] = ((constant<T>*)(this->dy_sum))->scala_mul(this->aphla);
+		constant<T>* temp_const = ((constant<T>*)(*(this->x))[0])->function_tensor(CONS_COS, 1, 1);
+		constant<T>::op_math(CONSTANT_OP_MUL, temp_const, this->dy_sum, temp_const, &apla1, &apla2, &beta);
+		(*this->dx)[0] = temp_const->scala_mul(this->alpha);
 		temp_const->clear();
 		backward_over = 1;
-		cout << "backward::" << this->name_of_op << endl;
+		//cout << "backward over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -102,11 +103,11 @@ public:
 		T apla1 = 1.0;
 		T apla2 = 1.0;
 		//1 no use  //0 ,dy/dx==1
-		constant<T>* temp_const = ((constant<T>*)(*(this->x))[1])->function_tensor(CONS_COS, 1, 0);
-		((constant<T>*)(this->y)) = temp_const->scala_mul(this->aphla);
+		constant<T>* temp_const = ((*this->x)[0])->function_tensor(CONS_COS, 1, 0);
+		this->y= temp_const->scala_mul(this->alpha);
 		temp_const->clear();		
 		forward_over = 1;
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << endl;
 	}
 };
 #endif

@@ -309,8 +309,9 @@ void dmath_vector_gpu(gpu_math_op math_op, int size, value_type *buffA, value_ty
 		cudnn_op_math = CONS_REC;//1/x,x!=0
 		drec_vector_kernel<value_type> << <grid_size, BLOCK_SIZE >> > (size, buffA);
 		checkCudaErrors(cudaDeviceSynchronize());
+		break;
 	default:
-		cout << "wrong constant<T> math op type " << endl;
+		cout << "aaaa wrong constant<T> math op type " << endl;
 	}
 };
 
