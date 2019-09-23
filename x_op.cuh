@@ -30,6 +30,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 #include "stdarg.h"
+#include "queue.cuh"
 
 
 using namespace std;
@@ -42,82 +43,77 @@ class x_op:public base_op<T>
 {
 public:
 	//one constant,alpha=1
+
+	static x_op<T>*  convert_Placeholder_to_x_op(string cons_name_o, int device_o, int x_dim_num_o, int *x_dim_o) {
+		constant<T>* con_temp = constant<T>::getPlaceholder(cons_name_o, device_o, x_dim_num_o, x_dim_o);
+		x_op<T>* result = x_op<T>::getconObejct(con_temp, 1, cons_name_o);
+		return result;
+	};
+
 	static x_op<T>*  convert_cons_to_x_op(string cons_name_o,int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
-		constant<T>* thisobj=constant<T>::getObject(cons_name_o, device_o, x_dim_num_o, x_dim_o, x_src);
-		T alpha_o;
-		vector<constant<T>*>* vector_temp = new vector<constant<T>*>;
-		vector_temp->push_back(thisobj);
-		x_op<T>* result = x_op<T>::getconObejct(vector_temp, 1, cons_name_o);
+		constant<T>* con_temp=constant<T>::getObject(cons_name_o, device_o,x_dim_num_o,x_dim_o,x_src);
+		x_op<T>* result = x_op<T>::getconObejct(con_temp, 1, cons_name_o);
 		return result;
 	};
 
 	//one variable,alpha=1
 	static x_op<T>*  convert_var_to_x_op(bool trainble_o, string var_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
 		variable<T>* thisobj= variable<T>::getObject(trainble_o, var_name_o,device_o,x_dim_num_o,x_dim_o, x_src);
-		T alpha_o;
-		vector<variable<T>*>* vector_temp = new vector<variable<T>*>;
-		vector_temp->push_back(thisobj);
-		x_op<T>* result = x_op<T>::getvarObejct(vector_temp, 1,var_name_o);
+		x_op<T>* result = x_op<T>::getvarObejct(thisobj, 1,var_name_o);
 		return result;
 	};
 
 	//y=alpha*x
 	//vector constant
-	static x_op<T>* getconObejct(vector<constant<T>*>* constant_N_o,T alpha_o, string name_o)
+	static x_op<T>* getconObejct(constant<T>* constant_N_o,T alpha_o, string name_o)
 	{   //constant_N_o.size()==1
 		x_op<T>* result = new x_op<T>;
 		result->alpha = alpha_o;
 		result->name_of_op = name_o;
 		result->cons = constant_N_o;
-		result->cons_num = constant_N_o->size();
 		result->neededBackwark_dw=false;
-		result->neededBackwark_dx = false;
+		result->neededBackwark_dx=false;
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
-
-		for (typename vector<constant<T>*>::const_iterator iter = constant_N_o->cbegin(); iter != constant_N_o->cend(); iter++)
-		{
-			if ((*iter)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find((*iter)->con_name))
-				base_op<T>::global_placehold_constant->insert_v((*iter)->con_name, (*iter));
-		}
-
-		x_op<T>::global_graph->insert_v(result->name_of_op, result);
+        if (((constant<T>*)result->cons)->placeholder == 1 && !base_op<T>::global_placehold_constant->if_find(((constant<T>*)result->cons)->con_name))
+		   base_op<T>::global_placehold_constant->insert_v(((constant<T>*)result->cons)->con_name, result->cons);
+		x_op<T>::global_graph->insert_v_repeat(result->name_of_op, result);
 		return result;
 	}
 
 	//y=alpha*x
 	//veector varible
-	static x_op<T>* getvarObejct(vector<variable<T>*>* w_o, T alpha_o, string name_o)
+	static x_op<T>* getvarObejct(variable<T>* w_o, T alpha_o, string name_o)
 	{   //w_o.size()==1
 		x_op<T>* result = new x_op<T>;
 		result->alpha = alpha_o;
 		result->name_of_op = name_o;
 		result->w = w_o;
-		result->w_num= w_o->size();
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
-		result->dw = new vector<variable<T>*>;
 		
 		result->neededBackwark_dx = false;
 
-		for (typename vector<variable<T>*>::const_iterator iter = w_o->cbegin(); iter != w_o->cend(); iter++)
-		{
-			if ((*iter)->trainable == false)
-				result->neededBackwark_dw = false;
+		if (result->w->trainable == false)
+			result->neededBackwark_dw = false;
 
-			if ((*iter)->trainable == true && !base_op<T>::global_w_trainable->if_find((*iter)->var_name))
-				base_op<T>::global_w_trainable->insert_v((*iter)->var_name, (*iter));
+		if (result->w->trainable == true && !base_op<T>::global_w_trainable->if_find(((variable<T>*)result->w)->var_name))
+		{
+			base_op<T>::global_w_trainable->insert_v(((variable<T>*)result->w)->var_name, result->w);
+			result->dw = (result->w)->copy_zero();
+			base_op<T>::global_dw_trainable->insert_v(((variable<T>*)result->w)->var_name, result->dw);
+			
 		}
-		result->dw = new vector<variable<T>*>;
-		x_op<T>::global_graph->insert_v(result->name_of_op, result);
+
+		x_op<T>::global_graph->insert_v_repeat(result->name_of_op, result);//op insert to global_graph
 		return result;
 	}
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function(){
-		//cout << "backward  start::" << this->name_of_op << endl;
+		cout << "backward x_op start::" << this->name_of_op << endl;
 		//transport dy to dx
 		T apla2 = 1;
 		T beta = 1;
@@ -132,25 +128,45 @@ public:
 			}
 			
 		   this->sum_dy();
-		   constant<T>::op_math(CONSTANT_OP_ADD,(*this->dw)[0],this->dy_sum,(*this->dw)[0], &this->alpha, &apla2, &beta);
+		   constant<T>::op_math(CONSTANT_OP_ADD,this->dw,this->dy_sum,this->dw, &this->alpha, &apla2, &beta);
 		}
-		backward_over = 1;
-		//cout << "backward over::" << this->name_of_op << endl;
+
+		total_not_finish_ops_num -= 1;
+		this->backwardover = 1;
+
+		for(int i = 0; i < this->fathers_num; i++)
+		  {
+			((base_op<T>*)(this->fathers[i]))->sons_finshed_size -= 1;//father finished
+			if (((base_op<T>*)(this->fathers[i]))->sons_finshed_size == 0 && ((base_op<T>*)(this->fathers[i]))->backwardover!=1)
+			    //((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
+				queue_forward_canbe_used_ops->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
+		  }
+
+		cout << "backward x_op over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
 	virtual void forward_function() 
 	   { //from this->x computer this->y
 		if (this->neededBackwark_dw == false)
-		{   //input is constant
-			this->y = ((constant<T>*)((*(this->cons))[0]))->scala_mul(this->alpha);
-		}
+			{   //input is constant
+				this->y = this->cons;
+			}
 		else {
-			//input is variable
-			this->y = ((variable<T>*)((*(this->w))[0]))->scala_mul(this->alpha);
-		}
-		forward_over = 1;
-		//cout << "forward::" << this->name_of_op <<" y:"<<this->y->x[0]<<endl;
+				//input is variable
+				this->y = this->w;
+			}
+		
+		total_not_finish_ops_num -= 1;
+		this->forwardover = 1;
+
+		for (int i = 0; i < this->sons_num; i++)
+		    {
+				((base_op<T>*)(this->sons[i]))->fathers_finshed_size -= 1;//father finished
+				if (((base_op<T>*)(this->sons[i]))->fathers_finshed_size == 0 && ((base_op<T>*)(this->sons[i]))->forwardover != 1)
+					queue_forward_canbe_used_ops->push(((base_op<T>*)(this->sons[i]))->name_of_op);
+			}
+		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	   }
 };
 #endif // !_SUM_OP_CUH

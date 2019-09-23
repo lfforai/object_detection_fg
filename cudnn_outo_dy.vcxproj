@@ -23,9 +23,11 @@
     <ClInclude Include="graph_active_threads.cuh" />
     <ClInclude Include="hash_global.cuh" />
     <ClInclude Include="mul_op.cuh" />
+    <ClInclude Include="queue.cuh" />
     <ClInclude Include="sin_op.cuh" />
     <ClInclude Include="sum_op.cuh" />
     <ClInclude Include="test_tool.h" />
+    <ClInclude Include="tf.cuh" />
     <ClInclude Include="weigh_class.cuh" />
     <ClInclude Include="x_op.cuh" />
   </ItemGroup>

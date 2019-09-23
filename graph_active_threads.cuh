@@ -25,11 +25,10 @@
 
 #include "base_op.cuh"
 #include "hash_global.cuh"
+#include "queue.cuh"
 
 #include <windows.h>
 #include <wincrypt.h>
-
-
 
 using namespace std;
 #ifndef _GRAPH_ACTIVE_THREADS_CU
@@ -70,146 +69,74 @@ public:
 			((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initvector();
 		}
 	}
-
-	//void init_parameter() {
-	//	vector<string> keys = this->graph_global_active->allKeys();
-	//	for(typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
-	//	   {
-	//		  ((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initparameter();
-	//	   }
-	//}
-
-	void forward_function(int id){
-		vector<string> v_1;
-		v_1.assign(this->forwardkeys.begin(), this->forwardkeys.end());
-		//cout << "my id :" << id << endl;
-		//ShowVec(v_1);
-
-		int n=0;//random num;
-		int mark;// return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
-
-		int size_now = v_1.size();
-		int outbreak = 0;
-
-		while (outbreak==0){
-			  if (n > size_now - 1)
-				  n = 0;
-		      if(size_now>1)
-				  {
-				
-				    // return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
-				    mark=this->graph_global_active->un_map[v_1[n]]->if_forward_start_run();
-					if (mark == 1)//run op forward
-					   {this->graph_global_active->un_map[v_1[n]]->ward_run(0);
-						v_1.erase(v_1.begin()+n);
-						size_now = v_1.size();//aftering be removed the value,charge size of the vector 
-						n = 0;
-					   }
-					else if(mark== 0)// give up the op
-					{
-						v_1.erase(v_1.begin()+n);
-					    size_now = v_1.size();//aftering be removed the value,charge size of the vector
-						n = 0;
-					}
-				  }
-				else //if only 1 op left,wait until deal with it, or it be dealed by other thread
-				 {  
-					while(true){
-						mark = this->graph_global_active->un_map[v_1[0]]->if_forward_start_run();
-						if(mark == 1)//run op forward
-						  {
-							this->graph_global_active->un_map[v_1[0]]->ward_run(0);
-							outbreak = 1;
-							break;
-						  }
-						else if(mark==0){
-							outbreak = 1;
-							break;
-						}
-					}
-					
-				 }
-			    n = n + 1;
-			}
-		activeThreadsNum -= 1;
-	}
-
-	void backward_function(int id) {
-		vector<string> v_1;
-		v_1.assign(this->forwardkeys.begin(), this->forwardkeys.end());
-
-		int mark;// return 1:can run, 0:is_backwarding or be finished, -1:wait for son ready
-
-		int size_now = v_1.size();
-		int outbreak = 0;
-
-		int n = 0;//random num;
-
-		while (outbreak == 0) {
-			if (n > size_now - 1)
-				n = 0;
-			if (size_now > 1)
+   
+	void ward_function(int mark,int num) {
+		string value;
+		//int numcout = 0;
+		while (total_not_finish_ops_num>0) {
+			//if(((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->try_pop(value));
+			if (queue_forward_canbe_used_ops->try_pop(value)) //&& this->graph_global_active->if_find(value))	
 			{
-				// return 1:can run, 0:is_backwarding or be finished, -1:wait back son ready
-				mark = this->graph_global_active->un_map[v_1[n]]->if_backward_start_run();
-				//cout<<mark<<endl;
-				if (mark == 1)//run op backward
-				{
-					this->graph_global_active->un_map[v_1[n]]->ward_run(1);
-					v_1.erase(v_1.begin() + n);
-					size_now = v_1.size();//aftering be removed the value,charge size of the vector 
-					n = 0;
-				}
-				else if (mark == 0)// give up the op
-				{
-					v_1.erase(v_1.begin() + n);
-					size_now = v_1.size();//aftering be removed the value,charge size of the vector
-					n = 0;
-				}
+				((base_op<T>*)this->graph_global_active->un_map[value])->ward_run(mark);
+				//numcout++;
 			}
-			else //if only 1 op left,wait until deal with it, or it be dealed by other thread
-			{
-				while (true) {
-					mark = this->graph_global_active->un_map[v_1[0]]->if_backward_start_run();
-					if (mark == 1)//run op backward
-					{
-						this->graph_global_active->un_map[v_1[0]]->ward_run(1);
-						outbreak = 1;
-						break;
-					}
-					else if (mark == 0) {
-						outbreak = 1;
-						break;
-					}
-				}
-
-			}
-			n +=1;
 		}
 		activeThreadsNum -= 1;
+		//cout << "myid over:" << num <<"do job:"<<numcout<< endl;
 	}
 
-	void forward_start(int UseMulThread){
+	//forward_or_backward=0:forward ,1:=backward 
+	void ward_start(int UseMulThread,int forward_or_backward){
 		if (this->mark_InitParameter == 0)
-		{
+		{   
 			this->init_vector();
-			this->mark_InitParameter == 1;
-			cout<<"init_vector over"<<endl;
+			mark_InitParameter = 1;
+			//cout<<"init_vector over"<<endl;
 		}
+
+		//find frist ops ,put them into 
+		if (forward_or_backward == 0) {
+			vector<string> keys = this->graph_global_active->allKeys();
+			for (typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
+			{
+				if (((base_op<T>*)this->graph_global_active->un_map[(*iter)])->fathers.empty())
+					//((threadsafe_queue<string>*) base_op<T>::
+						queue_forward_canbe_used_ops->push(*iter);
+			}
+		}
+		else {
+			vector<string> keys = this->graph_global_active->allKeys();
+			for (typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
+			{
+				if (((base_op<T>*)this->graph_global_active->un_map[(*iter)])->sons.empty())
+					//((threadsafe_queue<string>*) base_op<T>::
+						queue_forward_canbe_used_ops->push(*iter);
+			}
+		}
+
+		total_not_finish_ops_num = this->forwardkeys.size();//ops numbers
+
+		//find start ops ,put it into  queue
 		this->activeThreadsNum = this->MaxThreadsNum;
 		if (UseMulThread == 1){//use mulity threads
+		   //dicide threads num;
 		   int num=this->MaxThreadsNum;
+		   num=num>queue_forward_canbe_used_ops->size()? queue_forward_canbe_used_ops->size():num;
+		   this->activeThreadsNum = num;
+		   //set threads num
 		   std::thread  **p=(std::thread**)malloc(num*sizeof(std::thread**));
 		   for(int i = 0; i < num; i++){ 
-			   p[i] = new std::thread(&graph_active<T>::forward_function,this,i);
+			   p[i] = new std::thread(&graph_active<T>::ward_function,this,forward_or_backward,i);
 		   }
 		   for (int i = 0; i < num; i++)
 		   {   
 			   p[i]->detach();
 		   }
-		   while (activeThreadsNum > 0) {
-		       //main thread 
+
+		   while (this->activeThreadsNum>0) {
+			  // printf("this->activeThreadsNum %d \n", this->activeThreadsNum);
 		   }
+
 		   for (int i = 0; i < num; i++) {
 			   free(p[i]);
 		   }
@@ -217,41 +144,9 @@ public:
 		}
 		else 
 		{   //use only one thread
-			forward_function(1);
+			ward_function(forward_or_backward,1);
 		}
-
-		this->forwardover = 1;
-	}
-
-	void backward_start(int UseMulThread) {
-		if (forwardover != 1)
-		{
-			this->forward_start(UseMulThread);
-		}
-		this->activeThreadsNum = this->MaxThreadsNum;
-		if (UseMulThread == 1) {//use mulity threads
-			int num = this->MaxThreadsNum;
-			std::thread  **p = (std::thread**)malloc(num * sizeof(std::thread**));
-			for (int i = 0; i < num; i++) {
-				p[i] = new std::thread(&graph_active<T>::backward_function, this, i);
-			}
-			for (int i = 0; i < num; i++)
-			{
-				p[i]->detach();
-			}
-			while (activeThreadsNum > 0) {
-				//main thread 
-			}
-			for (int i = 0; i < num; i++) {
-				free(p[i]);
-			}
-			free(p);
-		}
-		else
-		{   //use only one thread
-			backward_function(1);
-		}
-		this->backwardover = 1;
+		
 	}
 
 	static graph_active<T>* getobject(graph<T, base_op>* graph_global_active_o){
@@ -267,9 +162,7 @@ public:
 		object_ga->MaxThreadsNum = (maxthreadnum>1)?(int)(maxthreadnum/2):1; //use half threadnum 
 		object_ga->activeThreadsNum=object_ga->MaxThreadsNum;
 		
-		//forwardkeys= backwardkeys
 		object_ga->forwardkeys=object_ga->graph_global_active->allKeys();//init forwardkeys
-		//object_ga->backwardkeys.assign(object_ga->backwardkeys.begin(), object_ga->backwardkeys.end());//assign backwardkeys
 		
 		return object_ga;
 	}

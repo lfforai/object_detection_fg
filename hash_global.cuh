@@ -37,9 +37,23 @@ public:
 		if (!this->if_find(str))
 			un_map.insert(std::pair<string, classobject<vlaueT>*>{str, value});
 		else
-		{
+		{    
 			cout<<"op name repeat:"<<str<<endl;
 			exit(0);
+		}
+	}
+
+	void insert_v_repeat(string& str, classobject<vlaueT>* value)
+	{
+		if (!this->if_find(str))
+			un_map.insert(std::pair<string, classobject<vlaueT>*>{str, value});
+		else
+		{
+			while (this->if_find(str)) {
+				str = str + "_1";
+			}
+			un_map.insert(std::pair<string, classobject<vlaueT>*>{str, value});
+			//cout << "op name repeat:" << str << endl;
 		}
 	}
 

@@ -71,6 +71,7 @@ public:
 	int copynum = 0;
 	string con_name;
 	
+
 	void clear() {
 		if (device == 1)
 			cudaFree(this->x);
@@ -473,7 +474,41 @@ public:
 		return r;
 	}
 	
-	// look like tf.placeholder()
+	// all=[1.......1],type same with this
+    constant<T>* copy2ones()
+	{
+		constant<T>* r = new constant<T>;
+		r->con_name = "constant_one";
+		r->device = this->device;
+		r->x_dim_num = this->x_dim_num;
+		r->x_stride = this->x_stride;
+		r->x_dim = this->x_dim;
+
+		int length = r->x_stride[0] * r->x_dim[0];
+        checkCudaErrors(cudaMallocManaged((void**)&r->x, length * sizeof(T)));
+		for(int i = 0; i < length; i++)
+		   {r->x[i] = (T)1;}
+		return r;
+	}
+
+	constant<T>* copy2zeros()
+	{
+		constant<T>* r = new constant<T>;
+		r->con_name = "constant_zero";
+		r->device = this->device;
+		r->x_dim_num = this->x_dim_num;
+		r->x_stride = this->x_stride;
+		r->x_dim = this->x_dim;
+
+		int length = r->x_stride[0] * r->x_dim[0];
+		checkCudaErrors(cudaMallocManaged((void**)&r->x, length * sizeof(T)));
+		for (int i = 0; i < length; i++)
+		{
+			r->x[i] = (T)0;
+		}
+		return r;
+	}
+
 	static constant<T>* getPlaceholder(string con_name_o, int device_o, int x_dim_num_o, int *x_dim_o)
 	{
 		constant<T>* r = new constant<T>;

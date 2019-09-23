@@ -79,31 +79,56 @@ public:
 	}
 };
 
+class loadoperatrion{
+public:
+	string name;
+	loadoperatrion(){
+		this->name = "first";
+	};
+
+	loadoperatrion(string name_o){
+		this->name=name_o;
+	};
+
+	friend loadoperatrion  operator+(loadoperatrion& op,loadoperatrion& po2)
+	{
+		loadoperatrion result;
+		result.name = op.name + "+" + po2.name;
+		printf("start + \n");
+		return result;
+	}
+
+	friend loadoperatrion  operator/(loadoperatrion& op,loadoperatrion& po2) 
+	{
+		loadoperatrion result;
+		result.name = op.name+"/"+ po2.name;
+		printf("start / \n");
+		return result;
+	}
+
+	friend loadoperatrion  operator*(loadoperatrion& op,loadoperatrion& op2) {
+		loadoperatrion result;
+		result.name = op.name + "*" + op2.name;
+		printf("* start \n");
+		return result;
+	}
+};
+
 void test() {
-	//testone* obj=new testone();
-	//int num = 4;
-	//std::thread  **p = (std::thread**)malloc(num * sizeof(std::thread**));
-	//for (int i = 0; i < num; i++) {
-	//	p[i] = new std::thread(&testone::add_test,obj,i);
-	//}
-	//for (int i = 0; i < num; i++)
-	//{
-	//	p[i]->detach();
-	//}
-	//std::thread tj(&testone::sub_test, obj);
-	//tj.join();
-	//obj->printlast();
 
 	//vector test
-	vector<string>  avector;
+	//vector<string>  avector;
 	
-	avector.push_back("a");
-	avector.push_back("b");
-	avector.push_back("c");
-	avector.push_back("d");
-	vector<string>::iterator ite = find(avector.begin(), avector.end(), "a");
-	int index = (int)std::distance(std::begin(avector), ite);
-	printf("index:=%d \n", index);
+	//avector.push_back("a");
+	//avector.push_back("b");
+	//avector.push_back("c");
+	//avector.push_back("d");
+	//vector<string>::iterator ite = find(avector.begin(), avector.end(), "a");
+	//int index = (int)std::distance(std::begin(avector), ite);
+	//printf("index:=%d \n", index);
 	//avector[3] = "w";
-
+	loadoperatrion A("A");
+	loadoperatrion B("B");
+	loadoperatrion C("C");
+	B+A*(B/C);
 }

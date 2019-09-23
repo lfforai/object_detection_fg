@@ -49,9 +49,6 @@
     <ClInclude Include="error_util.h">
       <Filter>fp16</Filter>
     </ClInclude>
-    <ClInclude Include="gpumathtool.cuh">
-      <Filter>gpu_tool</Filter>
-    </ClInclude>
     <ClInclude Include="test_tool.h">
       <Filter>test</Filter>
     </ClInclude>
@@ -59,6 +56,15 @@
       <Filter>base</Filter>
     </ClInclude>
     <ClInclude Include="hash_global.cuh">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="tf.cuh">
+      <Filter>tf</Filter>
+    </ClInclude>
+    <ClInclude Include="gpumathtool.cuh">
+      <Filter>gpu_tool</Filter>
+    </ClInclude>
+    <ClInclude Include="queue.cuh">
       <Filter>base</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,6 +83,9 @@
     </Filter>
     <Filter Include="test">
       <UniqueIdentifier>{bed02423-d4a3-4523-9f49-90e70e672c27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tf">
+      <UniqueIdentifier>{d6c6ba4c-be08-4e81-ab31-3c97ff2c37f7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

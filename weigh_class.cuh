@@ -92,6 +92,7 @@ public:
 			memcpy(x, x_src, length * sizeof(T));
 		}
 		else {
+			checkCudaErrors(cudaMallocManaged((void**)&this->x, length * sizeof(T)));
 			checkCudaErrors(cudaMemcpy(x, x_src, length * sizeof(T), cudaMemcpyHostToDevice));
 		}
 	}
