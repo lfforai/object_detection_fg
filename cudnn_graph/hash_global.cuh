@@ -57,12 +57,22 @@ public:
 		}
 	}
 
-	void allvalue()
+	void showvalue()
 	{
 		for (const auto& e : this->un_map)
 		{
 			std::cout << e.first << " is " << e.second << std::endl;
 		}
+	}
+
+	vector<classobject<vlaueT>*>* getallvalue()
+	{
+		vector<classobject<vlaueT>*>* result=new vector<classobject<vlaueT>*>;
+		for(const auto& e : this->un_map)
+		  {
+			result->push_back((classobject<vlaueT>*)e.second);
+		  }
+		return result;
 	}
 
 	vector<string> allKeys(){

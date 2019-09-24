@@ -69,13 +69,14 @@ public:
 			((base_op<T>*)this->graph_global_active->un_map[(*iter)])->initvector();
 		}
 	}
-   
+
+	
 	void ward_function(int mark,int num) {
 		string value;
 		//int numcout = 0;
 		while (total_not_finish_ops_num>0) {
 			//if(((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->try_pop(value));
-			if (queue_forward_canbe_used_ops->try_pop(value)) //&& this->graph_global_active->if_find(value))	
+			if (queue_forward_canbe_used_ops->try_pop(value) && this->graph_global_active->if_find(value))	
 			{
 				((base_op<T>*)this->graph_global_active->un_map[value])->ward_run(mark);
 				//numcout++;
@@ -84,14 +85,44 @@ public:
 		activeThreadsNum -= 1;
 		//cout << "myid over:" << num <<"do job:"<<numcout<< endl;
 	}
+	
+	//test all placeholder constants all be assgined
+    void Placeholder_assgin_finished() {
+		vector<string> keys =  base_op<T>::global_placehold_constant->allKeys();
+		for (typename vector<string>::const_iterator iter = keys.cbegin(); iter != keys.cend(); iter++)
+		{
+		   if (((constant<T>*)((graph<T, constant>*) base_op<T>::global_placehold_constant)->un_map[(*iter)])->x_dim[0] == -1)
+		   {
+			   cout<<"placehold constant ::"<< *iter<<" not assgian init value!"<<endl;
+			   exit(0);
+		   }
+		}
+	}
+
+	void Placeholder_assgin(vector<constant<T>*> cons){
+		for (typename vector<constant<T>*>::const_iterator iter = cons.cbegin(); iter != cons.cend(); iter++)
+		{
+			//cout<< ((constant<T>*)(*iter))->con_name<<endl;
+			if (((graph<T, constant>*) base_op<T>::global_placehold_constant)->if_find(((constant<T>*)(*iter))->con_name))
+			{
+				constant<T> * value = ((graph<T, constant>*) base_op<T>::global_placehold_constant)->un_map[((constant<T>*)(*iter))->con_name];
+				value->initPlaceholder(((constant<T>*)(*iter))->x_dim_num, ((constant<T>*)(*iter))->x_dim, ((constant<T>*)(*iter))->x);
+			}
+			else
+			{
+				cout<<"no placehold constants name:"<< ((constant<T>*)(*iter))->con_name <<endl;
+				exit(0);
+			}
+		}
+	}
 
 	//forward_or_backward=0:forward ,1:=backward 
 	void ward_start(int UseMulThread,int forward_or_backward){
 		if (this->mark_InitParameter == 0)
-		{   
+		{
+			Placeholder_assgin_finished();
 			this->init_vector();
 			mark_InitParameter = 1;
-			//cout<<"init_vector over"<<endl;
 		}
 
 		//find frist ops ,put them into 
@@ -129,8 +160,11 @@ public:
 			   p[i] = new std::thread(&graph_active<T>::ward_function,this,forward_or_backward,i);
 		   }
 		   for (int i = 0; i < num; i++)
-		   {   
-			   p[i]->detach();
+		   {
+			   if (i != num - 1)
+				   p[i]->detach();
+			   else
+				   p[i]->join();
 		   }
 
 		   while (this->activeThreadsNum>0) {
@@ -158,7 +192,7 @@ public:
 		
 		//thread nums
 		int maxthreadnum = object_ga->CatchCpuThreadsMaxNum();
-		cout<<"cpu max thread::"<<maxthreadnum <<endl;
+		//cout<<"cpu max thread::"<<maxthreadnum <<endl;
 		object_ga->MaxThreadsNum = (maxthreadnum>1)?(int)(maxthreadnum/2):1; //use half threadnum 
 		object_ga->activeThreadsNum=object_ga->MaxThreadsNum;
 		

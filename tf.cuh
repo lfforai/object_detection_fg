@@ -59,6 +59,11 @@ public:
 		//base_op<T>::queue_forward_canbe_used_ops = new threadsafe_queue<string>;
 	}
 	
+	
+	graph_active<T>* session(){   
+		 return graph_active<float>::getobject(base_op<T>::global_graph);
+	}
+	
 	//constant
 	base_op<T>* constantPlaceholder_o(string name, int device, int x_dim_num_o, int* dim)
 	{

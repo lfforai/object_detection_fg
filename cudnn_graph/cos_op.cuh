@@ -66,7 +66,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
-		cout << "backward  cos start::" << this->name_of_op << endl;
+		//cout << "backward  cos start::" << this->name_of_op << endl;
 		if (this->sons_num > 0) 
 		{   // have sons;
 		   //cout << "backward start::" << this->name_of_op << endl;
@@ -104,7 +104,7 @@ public:
 				
 		}
 
-		cout << "backward cos over::" << this->name_of_op << endl;
+		//cout << "backward cos over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -133,7 +133,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->sons[i]))->name_of_op);
 			}
 
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	}
 };
 #endif

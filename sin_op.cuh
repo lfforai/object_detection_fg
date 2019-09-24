@@ -65,7 +65,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function(){
-		cout << "backward sin start::" << this->name_of_op << endl;
+		//cout << "backward sin start::" << this->name_of_op << endl;
 		//transport dy to dx
 		if (this->sons_num > 0) 
 		{
@@ -102,7 +102,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
 		}
 
-		cout << "backward sin over::" << this->name_of_op << endl;
+		//cout << "backward sin over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -132,7 +132,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->sons[i]))->name_of_op);
 			}
 
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	}
 };
 #endif

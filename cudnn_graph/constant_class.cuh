@@ -67,6 +67,7 @@ public:
 	int  x_dim_num;//length of x_dim
 	int* x_dim;
 	int  device;
+	int  length;
 	int  placeholder = 0; //not placeholder,placeholder::[None,244,244,5] list tensorflow
 	int copynum = 0;
 	string con_name;
@@ -462,6 +463,7 @@ public:
 		}
 
 		int length = r->x_stride[0] * r->x_dim[0];
+		r->length = length;
 
 		if (r->device == 0) {
 			r->x = (T*)malloc(length * sizeof(T));
@@ -485,6 +487,8 @@ public:
 		r->x_dim = this->x_dim;
 
 		int length = r->x_stride[0] * r->x_dim[0];
+		r->length = length;
+
         checkCudaErrors(cudaMallocManaged((void**)&r->x, length * sizeof(T)));
 		for(int i = 0; i < length; i++)
 		   {r->x[i] = (T)1;}
@@ -501,6 +505,8 @@ public:
 		r->x_dim = this->x_dim;
 
 		int length = r->x_stride[0] * r->x_dim[0];
+		r->length = length;
+
 		checkCudaErrors(cudaMallocManaged((void**)&r->x, length * sizeof(T)));
 		for (int i = 0; i < length; i++)
 		{
@@ -515,6 +521,7 @@ public:
 		r->con_name = con_name_o;
 		r->device = device_o;
 		r->x_dim_num = x_dim_num_o;
+		r->x_dim = x_dim_o;
 		r->placeholder = 1;// mark  r is a plaeholder constant
 		return r;
 	}
@@ -536,6 +543,7 @@ public:
 		}
 
 		int length = this->x_stride[0] * this->x_dim[0];
+		this->length = length;
 
 		if (this->device == 0) {
 			this->x = (T*)malloc(length * sizeof(T));

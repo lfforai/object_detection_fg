@@ -76,13 +76,15 @@ public:
 
   //reload the backward_function,make sure last of the function must be backward_over = 1
   virtual  void backward_function(){
-	  cout << "backward sum start::" << this->name_of_op << endl;
-		//transport dy to dx
-	  bool eq = ((constant<T>*)(*this->x)[0])->x_stride[0] * ((constant<T>*)(*this->x)[0])->x_dim[0] ==
-		  ((constant<T>*)(*this->x)[1])->x_stride[0] * ((constant<T>*)(*this->x)[1])->x_dim[0] ? true : false;
+	  //cout << "backward sum start::" << this->name_of_op << endl;
+	 //transport dy to dx
+	  int len1 = ((constant<T>*)(*this->x)[0])->x_stride[0] * ((constant<T>*)(*this->x)[0])->x_dim[0];
+	  int len2 = ((constant<T>*)(*this->x)[1])->x_stride[0] * ((constant<T>*)(*this->x)[1])->x_dim[0];
+	  
+	  bool eq = len1==len2?true:false;
 	  if (eq) 
 	  {
-		  cout<<"sum  eq"<<endl;
+		  //cout<<"sum  eq"<<endl;
 		  if (this->sons_num > 0)
 		  {
 			  for (int i = 0; i < this->sons_num; i++)
@@ -125,7 +127,7 @@ public:
 		  }
 	  }
 	  else {
-		  cout << "not eq  and sum init" << endl;
+		  //cout << "not eq  and sum init" << endl;
           //op1.size != op2.size	  
 		  int lenop1 = ((constant<T>*)(*this->x)[0])->x_stride[0] * ((constant<T>*)(*this->x)[0])->x_dim[0];
 		  int lenop2 = ((constant<T>*)(*this->x)[1])->x_stride[0] * ((constant<T>*)(*this->x)[1])->x_dim[0];
@@ -151,7 +153,7 @@ public:
 		  //----------------------------------------------------------------------	 
 		  if (this->sons_num > 0)
 		  {    //has sons
-			  cout << "not eq  and sum_have_son" << endl;
+			  //cout << "not eq  and sum_have_son" << endl;
 			  for (int i = 0; i < this->sons_num; i++)
 			  {   //find the index of sons->father
 				  vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
@@ -197,7 +199,7 @@ public:
 		  }
 		  else
 		  { //no  sons
-			  cout<<"not eq  and sum_no_son"<<endl;
+			  //cout<<"not eq  and sum_no_son"<<endl;
 			  if (maxindex == 0)
 			  {
 				  int n = (int)(lenop1 / lenop2);
@@ -217,7 +219,6 @@ public:
 					  *(((constant<T>*)tempsmall)->x + j) = *(((constant<T>*)tempsmall)->x + j)*n;
 				  }
 				  (*this->dx)[0] = tempsmall;
-				  int b;
 			  }
 		  }
 	  
@@ -234,7 +235,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
 		}
 	
-		cout <<"backward sum over::"<<this->name_of_op << endl;
+		//cout <<"backward sum over::"<<this->name_of_op << endl;
 	}
 	
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -271,7 +272,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->sons[i]))->name_of_op);
 			}
 
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	}
 };
 #endif // !_SUM_OP_CUH

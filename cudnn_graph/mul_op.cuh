@@ -76,7 +76,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
-		cout << "backward mul start::" << this->name_of_op << endl;
+		//cout << "backward mul start::" << this->name_of_op << endl;
 		//transport dy to dx
 
 		bool eq=((constant<T>*)(*this->x)[0])->x_stride[0] * ((constant<T>*)(*this->x)[0])->x_dim[0] ==
@@ -148,7 +148,7 @@ public:
 		 //----------------------------------------------------------------------	 
 		 if(this->sons_num > 0) 
 			{    //has sons
-			     cout << "no eq mul hase sons" << endl;
+			     //cout << "no eq mul hase sons" << endl;
 				 for (int i = 0; i < this->sons_num; i++)
 				  {   //find the index of sons->father
 					  vector<string>::iterator ite1 = find(((base_op<T>*)(this->sons[i]))->fathers_name.begin(), ((base_op<T>*)(this->sons[i]))->fathers_name.end(), this->name_of_op);
@@ -211,7 +211,7 @@ public:
 			}
 			else 
 			{ //no  sons
-			 cout<<"no eq mul no sons"<<endl;
+			 //cout<<"no eq mul no sons"<<endl;
 			 if (maxindex == 0)
 			 {    
 				 int n = (int)(lenop1 / lenop2);
@@ -265,7 +265,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
 		}
 	
-		cout << "backward mul over::" << this->name_of_op << endl;
+		//cout << "backward mul over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -301,7 +301,7 @@ public:
 				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->sons[i]))->name_of_op);
 			}
 
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	}
 };
 #endif // !_SUM_OP_CUH

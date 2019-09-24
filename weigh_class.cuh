@@ -58,7 +58,7 @@ public:
 			temp = (T*)malloc(length * sizeof(T));
 			memset(temp,0, length * sizeof(T));
 		}
-		variable<T>* result = variable<T>::getObject(this->trainable,this->con_name + "_" + to_string(this->copynum), this->device, this->x_dim_num, this->x_dim, temp);
+		variable<T>* result = variable<T>::getObject(this->trainable,this->var_name + "_" + to_string(this->copynum), this->device, this->x_dim_num, this->x_dim, temp);
 		return result;
 	}
 
@@ -86,6 +86,7 @@ public:
 		}
 
 		int length = x_stride[0] * x_dim[0];
+		r->length = length;
 
 		if (device == 0) {
 			x = (T*)malloc(length * sizeof(T));
@@ -121,6 +122,7 @@ public:
 		}
 
 		int length = r->x_stride[0] * r->x_dim[0];
+		r->length = length;
 
 		if (r->device == 0) {
 			r->x = (T*)malloc(length * sizeof(T));

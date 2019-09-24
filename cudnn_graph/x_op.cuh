@@ -101,8 +101,10 @@ public:
 
 		if (result->w->trainable == true && !base_op<T>::global_w_trainable->if_find(((variable<T>*)result->w)->var_name))
 		{
+			
 			base_op<T>::global_w_trainable->insert_v(((variable<T>*)result->w)->var_name, result->w);
-			result->dw = (result->w)->copy_zero();
+			result->dw = (result->w)->copy_zero(); 
+			((variable<T>*)result->dw)->var_name = ((variable<T>*)result->dw)->var_name + "_dw";
 			base_op<T>::global_dw_trainable->insert_v(((variable<T>*)result->w)->var_name, result->dw);
 			
 		}
@@ -113,7 +115,7 @@ public:
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function(){
-		cout << "backward x_op start::" << this->name_of_op << endl;
+		//cout << "backward x_op start::" << this->name_of_op << endl;
 		//transport dy to dx
 		T apla2 = 1;
 		T beta = 1;
@@ -142,7 +144,7 @@ public:
 				queue_forward_canbe_used_ops->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
 		  }
 
-		cout << "backward x_op over::" << this->name_of_op << endl;
+		//cout << "backward x_op over::" << this->name_of_op << endl;
 	}
 
 	//reload the forward_function,make sure last of the function must be forward_over = 1
@@ -166,7 +168,7 @@ public:
 				if (((base_op<T>*)(this->sons[i]))->fathers_finshed_size == 0 && ((base_op<T>*)(this->sons[i]))->forwardover != 1)
 					queue_forward_canbe_used_ops->push(((base_op<T>*)(this->sons[i]))->name_of_op);
 			}
-		cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
+		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	   }
 };
 #endif // !_SUM_OP_CUH
