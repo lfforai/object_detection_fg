@@ -11,7 +11,6 @@
 #include <string>
 #include <windows.h>
 #include <thread>
-#include "test_tool.h"
 #include  <ctime>
 #include <iostream>
 
@@ -29,19 +28,23 @@
 #include "sin_op.cuh"
 #include "cos_op.cuh"
 #include "queue.cuh"
+#include "reduce_sum_op.cuh"
+#include "reduce_avg_op.cuh"
+#include "power_x_op.cuh"
+#include "a_pow_x_op.cuh"
 
 using namespace std;
 
 #ifndef _TF_CUH_
 #define _TF_CUH_
 
-string Convert(float Num)
-{
-	ostringstream oss;
-	oss << Num;
-	string str(oss.str());
-	return str;
-}
+//string Convert(float Num)
+//{
+//	ostringstream oss;
+//	oss << Num;
+//	string str(oss.str());
+//	return str;
+//}
 
 template<class T>
 class tf {
@@ -94,6 +97,26 @@ public:
 	base_op<T>* cos(base_op<T>* op)
 	{
 		return cos_op<T>::getObejct(op, 1.0, "cos(" + op->name_of_op + ")");
+	}
+
+	base_op<T>* power_x(base_op<T>* op,T aphla)
+	{   
+		return power_x_op<T>::getObejct(op, aphla , "power(" + op->name_of_op +"^"+std::to_string(aphla) +")");
+	}
+
+	base_op<T>* a_power_x(base_op<T>* op, T aphla)
+	{
+		return a_power_x_op<T>::getObejct(op, aphla, "a_power_x(" + std::to_string(aphla)+"^"+ op->name_of_op + ")");
+	}
+
+	base_op<T>* reduce_sum(base_op<T>* op,int* dim_c)
+	{
+		return reduce_sum_op<T>::getObejct(op, dim_c, "reduce_sum(" + op->name_of_op + ")");
+	}
+
+	base_op<T>* reduce_avg(base_op<T>* op, int* dim_c)
+	{
+		return reduce_avg_op<T>::getObejct(op, dim_c, "reduce_avg(" + op->name_of_op + ")");
 	}
 
 	template<class S> friend base_op<S>* operator*(base_op<S>& op1, base_op<S>* op2);

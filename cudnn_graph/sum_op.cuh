@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <mutex>
 #include <ctime> 
-#include "test_tool.h"
 #include "constant_class.cuh"
 #include "weigh_class.cuh"
 #include "base_op.cuh"

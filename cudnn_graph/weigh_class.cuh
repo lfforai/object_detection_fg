@@ -22,10 +22,10 @@
 #include <assert.h>
 #include <mutex>
 #include <ctime> 
-#include "test_tool.h"
 #include "constant_class.cuh"
 #include <windows.h>
 #include <wincrypt.h>
+#include "paramter.h"
 
 using namespace std;
 #ifndef _WEIGH_CLASS_CUH
@@ -36,6 +36,9 @@ class variable:public constant<T>
 {
 private:
 public:
+	Layer_load_t<T>* paramterload;
+	Layer_load_t<T>* paramtersave;
+
 	bool trainable=true;
 	string var_name;
 	variable<T>* copy()
@@ -99,8 +102,12 @@ public:
 	}
 
 	static variable<T>* getObject(bool trainble_o,string var_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src)
-	{
+	{  
 		variable<T>* r = new variable<T>;
+
+		r->paramterload =new Layer_load_t<T>;
+		r->paramtersave = new Layer_load_t<T>;
+
 		r->trainable= trainble_o;
 		r->var_name = var_name_o;
 		r->device = device_o;

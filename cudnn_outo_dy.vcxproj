@@ -11,8 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="a_pow_x_op.cuh" />
     <ClInclude Include="base_op.cuh" />
     <ClInclude Include="constant_class.cuh" />
+    <ClInclude Include="convert.h" />
+    <ClInclude Include="conv_op.cuh" />
     <ClInclude Include="cos_op.cuh" />
     <ClInclude Include="div_op.cuh" />
     <ClInclude Include="error_util.h" />
@@ -22,8 +25,14 @@
     <ClInclude Include="gpumathtool.cuh" />
     <ClInclude Include="graph_active_threads.cuh" />
     <ClInclude Include="hash_global.cuh" />
+    <ClInclude Include="image.h" />
     <ClInclude Include="mul_op.cuh" />
+    <ClInclude Include="net_tool.cuh" />
+    <ClInclude Include="paramter.h" />
+    <ClInclude Include="power_x_op.cuh" />
     <ClInclude Include="queue.cuh" />
+    <ClInclude Include="reduce_avg_op.cuh" />
+    <ClInclude Include="reduce_sum_op.cuh" />
     <ClInclude Include="sin_op.cuh" />
     <ClInclude Include="sum_op.cuh" />
     <ClInclude Include="test_tool.h" />
@@ -38,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fp16_emu.cpp" />
+    <ClCompile Include="image.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E59EA756-1405-423A-AAE8-88F8267D09A0}</ProjectGuid>
@@ -71,19 +81,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\opencv4.1\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.1\7_CUDALibraries\common\FreeImage\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Freeimage\lib\linux\x86_64;C:\opencv4.1\x64\vc16\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.1\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.1\common\inc;C:\ProgramData\Anaconda3\include;C:\Freeimage\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudnn.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.1\common\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>freeimage.lib;opencv_world410d.lib;python37_d.lib;cudnn.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\ProgramData\Anaconda3\libs;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.1\common\lib\x64;C:\Freeimage\linux\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>

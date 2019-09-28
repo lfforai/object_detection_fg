@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <mutex>
 #include <ctime> 
-#include "test_tool.h"
 #include "constant_class.cuh"
 #include "weigh_class.cuh"
 
@@ -39,11 +38,11 @@ using namespace std;
 #ifndef _BASE_OP_CUH
 #define _BASE_OP_CUH
 
+//base_op
 static std::atomic<int> total_not_finish_ops_num = -1;
 threadsafe_queue<string>*  queue_forward_canbe_used_ops=new threadsafe_queue<string>;
 
 //now can be forward or backoward ops namethreadsafe_queue<string>* queue_forward_canbe_used_ops;//now can be forward or backoward ops name
-
 template<class T>
 class base_op{
  private:

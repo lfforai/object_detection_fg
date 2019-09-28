@@ -9,8 +9,9 @@
 *
 */
 
-#include "error_util.h"
+//#include "error_util.h"
 #include "fp16_dev.h"
+#include "error_util.h"
 
 #define BLOCK_SIZE 128
 template <class value_type>

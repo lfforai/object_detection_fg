@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <mutex>
 #include <ctime> 
-#include "test_tool.h"
 #include "constant_class.cuh"
 #include "weigh_class.cuh"
 #include "base_op.cuh"
@@ -41,6 +40,7 @@ class cos_op :public base_op<T>
 public:
 	static cos_op<T>* getObejct(base_op<T>* op1, T aphla_o, string name_o, char* Tensor_des = "")
 	{
+		
 		//assume size must be same
 		cos_op<T>* result = new cos_op<T>;
 		result->alpha = aphla_o;
@@ -49,7 +49,7 @@ public:
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
 
-
+		
 		result->fathers.push_back(op1);
 		result->fathers_name.push_back(op1->name_of_op);
 		result->fathers_num = 1;

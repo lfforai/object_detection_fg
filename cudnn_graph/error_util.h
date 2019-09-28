@@ -8,7 +8,7 @@
 * is strictly prohibited.
 *
 */
-
+#pragma once
 #if !defined(_ERROR_UTIL_H_)
 #define _ERROR_UTIL_H_
 
@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <helper_string.h>
 
 #define TOSTR_(s)   #s
 #define TOSTR(s)    TOSTR_(s)
@@ -119,24 +120,24 @@ static void  showDevices( void )
 #define STRNCASECMP strncasecmp
 #endif
 #endif
-inline int stringRemoveDelimiter(char delimiter, const char *string)
-{
-    int string_start = 0;
+//inline int stringRemoveDelimiter(char delimiter, const char *string)
+//{
+//    int string_start = 0;
+//
+//    while (string[string_start] == delimiter)
+//    {
+//        string_start++;
+//    }
+//
+//    if (string_start >= (int)strlen(string)-1)
+//    {  
+//        return 0;
+//    }
+//
+//    return string_start;
+//}
 
-    while (string[string_start] == delimiter)
-    {
-        string_start++;
-    }
-
-    if (string_start >= (int)strlen(string)-1)
-    {  
-        return 0;
-    }
-
-    return string_start;
-}
-
-inline bool checkCmdLineFlag(const int argc, const char **argv, const char *string_ref)
+inline bool c(const int argc, const char **argv, const char *string_ref)
 {
     bool bFound = false;
 
@@ -163,76 +164,76 @@ inline bool checkCmdLineFlag(const int argc, const char **argv, const char *stri
     return bFound;
 }
 
-inline int getCmdLineArgumentInt(const int argc, const char **argv, const char *string_ref)
-{
-    bool bFound = false;
-    int value = -1;
+//inline int getCmdLineArgumentInt(const int argc, const char **argv, const char *string_ref)
+//{
+//    bool bFound = false;
+//    int value = -1;
+//
+//    if (argc >= 1)
+//    {
+//        for (int i=1; i < argc; i++)
+//        {
+//            int string_start = stringRemoveDelimiter('-', argv[i]);
+//            const char *string_argv = &argv[i][string_start];
+//            int length = (int)strlen(string_ref);
+//
+//            if (!STRNCASECMP(string_argv, string_ref, length))
+//            {
+//                if (length+1 <= (int)strlen(string_argv))
+//                {
+//                    int auto_inc = (string_argv[length] == '=') ? 1 : 0;
+//                    value = atoi(&string_argv[length + auto_inc]);
+//                }
+//                else
+//                {
+//                    value = 0;
+//                }
+//
+//                bFound = true;
+//                continue;
+//            }
+//        }
+//    }
+//
+//    if (bFound)
+//    {
+//        return value;
+//    }
+//    else
+//    {
+//        printf("Not found int\n");
+//        return 0;
+//    }
+//}
 
-    if (argc >= 1)
-    {
-        for (int i=1; i < argc; i++)
-        {
-            int string_start = stringRemoveDelimiter('-', argv[i]);
-            const char *string_argv = &argv[i][string_start];
-            int length = (int)strlen(string_ref);
-
-            if (!STRNCASECMP(string_argv, string_ref, length))
-            {
-                if (length+1 <= (int)strlen(string_argv))
-                {
-                    int auto_inc = (string_argv[length] == '=') ? 1 : 0;
-                    value = atoi(&string_argv[length + auto_inc]);
-                }
-                else
-                {
-                    value = 0;
-                }
-
-                bFound = true;
-                continue;
-            }
-        }
-    }
-
-    if (bFound)
-    {
-        return value;
-    }
-    else
-    {
-        printf("Not found int\n");
-        return 0;
-    }
-}
-
-inline bool getCmdLineArgumentString(const int argc, const char **argv,
-                                     const char *string_ref, char **string_retval)
-{
-    bool bFound = false;
-
-    if (argc >= 1)
-    {
-        for (int i=1; i < argc; i++)
-        {
-            int string_start = stringRemoveDelimiter('-', argv[i]);
-            char *string_argv = (char *)&argv[i][string_start];
-            int length = (int)strlen(string_ref);
-
-            if (!STRNCASECMP(string_argv, string_ref, length))
-            {
-                *string_retval = &string_argv[length+1];
-                bFound = true;
-                continue;
-            }
-        }
-    }
-
-    if (!bFound)
-    {
-        *string_retval = NULL;
-    }
-
-    return bFound;
-}
+//inline bool getCmdLineArgumentString(const int argc, const char **argv,
+//                                     const char *string_ref, char **string_retval)
+//{
+//    bool bFound = false;
+//
+//    if (argc >= 1)
+//    {
+//        for (int i=1; i < argc; i++)
+//        {
+//            int string_start = stringRemoveDelimiter('-', argv[i]);
+//            char *string_argv = (char *)&argv[i][string_start];
+//            int length = (int)strlen(string_ref);
+//
+//            if (!STRNCASECMP(string_argv, string_ref, length))
+//            {
+//                *string_retval = &string_argv[length+1];
+//                bFound = true;
+//                continue;
+//            }
+//        }
+//    }
+//
+//    if (!bFound)
+//    {
+//        *string_retval = NULL;
+//    }
+//
+//    return bFound;
+//}
 
 #endif // _ERROR_UTIL_H_

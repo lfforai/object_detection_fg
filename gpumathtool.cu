@@ -119,7 +119,7 @@ __global__ void rec_vector_kernel(int size, value_type *buffA)
 
 template <class value_type>
 //A only used by apowx,xpowa
-void math_vector_gpu(gpu_math_op math_op,int size, value_type *buffA,value_type  aphal)
+void math_vector_gpu(gpu_math_op math_op,int size,value_type *buffA,value_type aphal)
 {
 	gpu_math_op cudnn_op_math;
 	int grid_size = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;

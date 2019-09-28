@@ -32,24 +32,24 @@
 
 using namespace std;
 
-#ifndef _COS_OP_CUH
-#define _COS_OP_CUH
-template<class T>
-class cos_op :public base_op<T>
+#ifndef _A_POWER_X_OP_CUH
+#define _A_POWER_X_OP_CUH
+
+template<class T>  //x^aphla_o
+class a_power_x_op :public base_op<T>
 {
 public:
-	static cos_op<T>* getObejct(base_op<T>* op1, T aphla_o, string name_o, char* Tensor_des = "")
+	static a_power_x_op<T>* getObejct(base_op<T>* op1, T aphla_o, string name_o, char* Tensor_des = "")
 	{
-		
 		//assume size must be same
-		cos_op<T>* result = new cos_op<T>;
+		a_power_x_op<T>* result = new a_power_x_op<T>;
 		result->alpha = aphla_o;
 		result->name_of_op = name_o;
 		result->x = new vector<constant<T>*>;
 		result->dx = new vector<constant<T>*>;
 		result->dy = new vector<constant<T>*>;
 
-		
+
 		result->fathers.push_back(op1);
 		result->fathers_name.push_back(op1->name_of_op);
 		result->fathers_num = 1;
@@ -60,15 +60,15 @@ public:
 		op1->sons_num += 1;
 		op1->ydy_num += 1;
 
-		cos_op<T>::global_graph->insert_v_repeat(result->name_of_op, result);
+		a_power_x_op<T>::global_graph->insert_v_repeat(result->name_of_op, result);
 		return result;
 	}
 
 	//reload the backward_function,make sure last of the function must be backward_over = 1
 	virtual void backward_function() {
 		//cout << "backward  cos start::" << this->name_of_op << endl;
-		if (this->sons_num > 0) 
-		{   // have sons;
+		if (this->sons_num > 0)
+		{  // have sons;
 		   //cout << "backward start::" << this->name_of_op << endl;
 			for (int i = 0; i < this->sons_num; i++)
 			{   //find the index of sons->father
@@ -85,12 +85,12 @@ public:
 			T apla1 = 1.0;
 			T apla2 = 1.0;
 
-			(*this->dx)[0] = ((constant<T>*)(*(this->x))[0])->function_tensor(CONS_COS, 1, 1);
+			(*this->dx)[0] = ((constant<T>*)(*(this->x))[0])->function_tensor(CONS_APOWX, this->alpha, 1);
 			constant<T>::op_math(CONSTANT_OP_MUL, (*this->dx)[0], this->dy_sum, (*this->dx)[0], &apla1, &apla2, &beta);
 		}
 		else {
-		
-			(*this->dx)[0] = ((constant<T>*)(*(this->x))[0])->function_tensor(CONS_COS, 1, 1);
+
+			(*this->dx)[0] = ((constant<T>*)(*(this->x))[0])->function_tensor(CONS_APOWX, this->alpha, 1);
 		}
 
 		total_not_finish_ops_num -= 1;
@@ -101,9 +101,8 @@ public:
 			((base_op<T>*)(this->fathers[i]))->sons_finshed_size -= 1;//father finished
 			if (((base_op<T>*)(this->fathers[i]))->sons_finshed_size == 0 && ((base_op<T>*)(this->fathers[i]))->backwardover != 1)
 				queue_forward_canbe_used_ops->push(((base_op<T>*)(this->fathers[i]))->name_of_op);
-				
-		}
 
+		}
 		//cout << "backward cos over::" << this->name_of_op << endl;
 	}
 
@@ -114,24 +113,21 @@ public:
 			//self->x=father->y::fathers y be converted to this->x ,vector<constant<T>*>* x , vector<base_op<T>*> fathers
 			(*(this->x))[i] = ((base_op<T>*)(this->fathers[i]))->y;
 		}
+
 		//from this->x computer this->y
-		int i = 0;
-		T beta = 0;
-		T apla1 = 1.0;
-		T apla2 = 1.0;
 		//1 no use  //0 ,dy/dx==1
-		this->y = ((*this->x)[0])->function_tensor(CONS_COS, 1, 0);	
+		this->y = ((*this->x)[0])->function_tensor(CONS_APOWX, this->alpha, 0);
 
 		total_not_finish_ops_num -= 1;
 		this->forwardover = 1;
 
 		for (int i = 0; i < this->sons_num; i++)
-			{
-				((base_op<T>*)(this->sons[i]))->fathers_finshed_size -= 1;//father finished
-				if (((base_op<T>*)(this->sons[i]))->fathers_finshed_size == 0 && ((base_op<T>*)(this->sons[i]))->forwardover != 1)
-					queue_forward_canbe_used_ops->push(((base_op<T>*)(this->sons[i]))->name_of_op);
-				//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->sons[i]))->name_of_op);
-			}
+		{
+			((base_op<T>*)(this->sons[i]))->fathers_finshed_size -= 1;//father finished
+			if (((base_op<T>*)(this->sons[i]))->fathers_finshed_size == 0 && ((base_op<T>*)(this->sons[i]))->forwardover != 1)
+				queue_forward_canbe_used_ops->push(((base_op<T>*)(this->sons[i]))->name_of_op);
+			//((threadsafe_queue<string>*) base_op<T>::queue_forward_canbe_used_ops)->push(((base_op<T>*)(this->sons[i]))->name_of_op);
+		}
 
 		//cout << "forward::" << this->name_of_op << " y:" << this->y->x[0] << " y:" << this->y->x[1] << endl;
 	}

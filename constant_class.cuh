@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <mutex>
 #include <ctime> 
-#include "test_tool.h"
 #include <cudnn.h>
 #include "gpumathtool.cuh"
 #include <windows.h>
@@ -264,6 +263,7 @@ public:
 			checkCudaErr(cudaMallocManaged((void**)&indices, sizeInBytes_Indices));
 		}
 		else {
+			//printf("indices:%d \n", sizeInBytes_Indices * 8 / 32);
 			checkCudaErr(cudaMallocManaged((void**)&indices, 1));
 		}
 		

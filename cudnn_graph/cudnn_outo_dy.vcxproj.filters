@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CudaCompile Include="main.cu" />
     <CudaCompile Include="fp16_dev.cu">
       <Filter>fp16</Filter>
     </CudaCompile>
     <CudaCompile Include="gpumathtool.cu">
       <Filter>gpu_tool</Filter>
     </CudaCompile>
+    <CudaCompile Include="main.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="exp_op.cuh">
@@ -46,9 +46,6 @@
     <ClInclude Include="fp16_emu.h">
       <Filter>fp16</Filter>
     </ClInclude>
-    <ClInclude Include="error_util.h">
-      <Filter>fp16</Filter>
-    </ClInclude>
     <ClInclude Include="test_tool.h">
       <Filter>test</Filter>
     </ClInclude>
@@ -66,6 +63,36 @@
     </ClInclude>
     <ClInclude Include="queue.cuh">
       <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="reduce_sum_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="reduce_avg_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="power_x_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="a_pow_x_op.cuh">
+      <Filter>op</Filter>
+    </ClInclude>
+    <ClInclude Include="image.h">
+      <Filter>image_deal</Filter>
+    </ClInclude>
+    <ClInclude Include="error_util.h">
+      <Filter>fp16</Filter>
+    </ClInclude>
+    <ClInclude Include="paramter.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="convert.h">
+      <Filter>fp16</Filter>
+    </ClInclude>
+    <ClInclude Include="conv_op.cuh">
+      <Filter>tf_nn_op</Filter>
+    </ClInclude>
+    <ClInclude Include="net_tool.cuh">
+      <Filter>tf_nn_op</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -87,10 +114,19 @@
     <Filter Include="tf">
       <UniqueIdentifier>{d6c6ba4c-be08-4e81-ab31-3c97ff2c37f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tf_nn_op">
+      <UniqueIdentifier>{7cccc719-c381-49ec-acba-41b530ba0a5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="image_deal">
+      <UniqueIdentifier>{b0614305-4f44-4363-b69d-a33c2c142400}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fp16_emu.cpp">
       <Filter>fp16</Filter>
+    </ClCompile>
+    <ClCompile Include="image.cpp">
+      <Filter>image_deal</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
