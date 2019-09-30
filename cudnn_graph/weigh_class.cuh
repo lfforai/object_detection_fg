@@ -67,37 +67,41 @@ public:
 
 	//init in cpu=0,init in gpu=1
 	variable(){};
-	variable(bool trainble_o,string con_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
-		device = device_o;
-		x_dim_num = x_dim_num_o;
-		var_name = con_name_o;
-		r->trainable = trainble_o;
+	variable(bool trainble_o,string var_name_o, int device_o, int x_dim_num_o, int *x_dim_o, T* x_src) {
 
-		x_dim = (int *)malloc(x_dim_num * sizeof(int));
-		x_stride = (int *)malloc(x_dim_num * sizeof(int));
-		memcpy(x_dim, x_dim_o, x_dim_num * sizeof(int));
+		this->paramterload = new Layer_load_t<T>;
+		this->paramtersave = new Layer_load_t<T>;
 
-		if (x_dim_num > 1)
+		this->trainable = trainble_o;
+		this->var_name = var_name_o;
+		this->device = device_o;
+		this->x_dim_num = x_dim_num_o;
+
+		this->x_dim = (int *)malloc(this->x_dim_num * sizeof(int));
+		this->x_stride = (int *)malloc(this->x_dim_num * sizeof(int));
+		memcpy(this->x_dim, x_dim_o, this->x_dim_num * sizeof(int));
+
+		if (this->x_dim_num > 1)
 		{
-			x_stride[x_dim_num - 1] = 1;
-			for (int d = x_dim_num - 2; d >= 0; d--) {
-				x_stride[d] = x_stride[d + 1] * x_dim[d + 1];
+			this->x_stride[this->x_dim_num - 1] = 1;
+			for (int d = this->x_dim_num - 2; d >= 0; d--) {
+				this->x_stride[d] = this->x_stride[d + 1] * this->x_dim[d + 1];
 			}
 		}
 		else {
-			x_stride[x_dim_num - 1] = 1;
+			this->x_stride[this->x_dim_num - 1] = 1;
 		}
 
-		int length = x_stride[0] * x_dim[0];
-		r->length = length;
+		int length = this->x_stride[0] * this->x_dim[0];
+		this->length = length;
 
-		if (device == 0) {
-			x = (T*)malloc(length * sizeof(T));
-			memcpy(x, x_src, length * sizeof(T));
+		if (this->device == 0) {
+			this->x = (T*)malloc(length * sizeof(T));
+			memcpy(this->x, x_src, length * sizeof(T));
 		}
 		else {
 			checkCudaErrors(cudaMallocManaged((void**)&this->x, length * sizeof(T)));
-			checkCudaErrors(cudaMemcpy(x, x_src, length * sizeof(T), cudaMemcpyHostToDevice));
+			checkCudaErrors(cudaMemcpy(this->x, x_src, length * sizeof(T), cudaMemcpyDefault));
 		}
 	}
 
@@ -139,6 +143,7 @@ public:
 			checkCudaErrors(cudaMallocManaged((void**)&r->x, length * sizeof(T)));
 			checkCudaErrors(cudaMemcpy(r->x, x_src, length * sizeof(T), cudaMemcpyDefault));
 		}
+
 		return r;
 	}
 };

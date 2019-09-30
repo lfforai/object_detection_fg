@@ -32,6 +32,7 @@
 #include "reduce_avg_op.cuh"
 #include "power_x_op.cuh"
 #include "a_pow_x_op.cuh"
+#include "conv_op.cuh"
 
 using namespace std;
 
@@ -62,9 +63,8 @@ public:
 		//base_op<T>::queue_forward_canbe_used_ops = new threadsafe_queue<string>;
 	}
 	
-	
 	graph_active<T>* session(){   
-		 return graph_active<float>::getobject(base_op<T>::global_graph);
+		 return graph_active<T>::getobject(base_op<T>::global_graph);
 	}
 	
 	//constant
@@ -84,6 +84,13 @@ public:
 		return x_op<T>::convert_var_to_x_op(trianable,name,device,x_dim_num_o,dim,src);
 	}
    
+	//net_op
+	base_op<T>* conv(base_op<T>* op,int k_o,int* filtersize)
+	{
+	    return conv_op<T>::getObejct(op,"conv(" + op->name_of_op + ")",k_o,filtersize);
+	}
+
+	//math_op
 	base_op<T>* exp(base_op<T>* op)
 	{   
 		return exp_op<T>::getObejct(op,1.0,"exp("+op->name_of_op+")");

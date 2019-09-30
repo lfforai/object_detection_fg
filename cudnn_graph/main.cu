@@ -31,6 +31,8 @@
 #include "reduce_sum_op.cuh"
 #include "tf.cuh"
 
+#include "image.h"
+#include "cuda_rand.cuh"
 
 using namespace std;
 using namespace cv;
@@ -45,6 +47,7 @@ int main()
 	clock_t startTime, endTime;
 	startTime = clock();//计时开始
 	//int dimfold[4] = {-1, 1, 1, 1};
+
 	//int dimfold2[4] = { 1, 1, 1, 1 };
 
 	//int dim[4] = { 1,1,1,1 };
@@ -95,8 +98,24 @@ int main()
 	//		cout <<e->var_name<<":" <<((variable<float>*)e)->x[i] << endl;;
 	//	}
 	//  }
-	
-	tensor_reduce_test();
+	//tensor_reduce_test();
+
+	image<float>*  im=new image<float>;
+	im->readImage("C:/Users/Administrator/Desktop/lena.jpg");
+	cout<<im->width<<endl;
+	cout<<im->height<<endl;
+	cout<<im->size<<endl;
+
+	tf<float> tf; 
+    tf.graph_init();
+	int dim[4] = {1,3,512,512};
+	base_op<float>* image_input = tf.constant_o("image", 1, 4, dim, im->imgData_h);
+	int filter[4] = {1000,3,5,5};
+	tf.conv(image_input,1000,filter);
+	graph_active<float>* sess=tf.session();
+	sess->ward_start(0, 0);
+	cout<<"--------forward over-----------"<<endl;
+	//sess->ward_start(0, 1);
 	endTime = clock();
 	//output 
 	cout << "The run time is: " << (double)(endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;

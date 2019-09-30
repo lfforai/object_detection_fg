@@ -30,6 +30,7 @@
 #include "stdarg.h"
 #include "gpumathtool.cuh"
 #include "queue.cuh"
+#include "cudnn.h"
 
 //#include "fp16_dev.h"
 
@@ -78,6 +79,7 @@ class base_op{
 
 	 //--------------------------op-value--------------------------------------
 	 string name_of_op; //mast be unique;
+	 cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc, biasTensorDesc; //for net 
 
 	//N input ops of fathers has  N  x[0]....x[N-1] input,xd[0]....xd[N-1] output
 	//x,dx-
@@ -107,13 +109,15 @@ class base_op{
 			   }
 			else//data on cpu
 			  {
-				for(int i = 1; i < n; i++)
-				  {
-					for(int j = 0; j < length; j++)
-					  {
-						dy_sum->x[j] = dy_sum->x[j] + ((constant<T>*)(*dy)[i])->x[j];
-					  }
-				 }
+				//for(int i = 1; i < n; i++)
+				//  {
+				//	for(int j = 0; j < length; j++)
+				//	  {
+				//		dy_sum->x[j] = dy_sum->x[j] + ((constant<T>*)(*dy)[i])->x[j];
+				//	  }
+				// }
+				cout<<"sum_dy only suport gpu"<<endl;
+				exit(0);
 			  }
 		 }
 	}

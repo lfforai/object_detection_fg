@@ -94,6 +94,9 @@
     <ClInclude Include="net_tool.cuh">
       <Filter>tf_nn_op</Filter>
     </ClInclude>
+    <ClInclude Include="cuda_rand.cuh">
+      <Filter>gpu_tool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="op">

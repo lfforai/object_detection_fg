@@ -71,7 +71,6 @@ public:
 	int copynum = 0;
 	string con_name;
 	
-
 	void clear() {
 		if (device == 1)
 			cudaFree(this->x);
@@ -338,16 +337,16 @@ public:
 		}
 
 		cudnnHandle_t handle_;
-		checkCudnnErr(cudnnCreate(&handle_));
+		checkCUDNN(cudnnCreate(&handle_));
 
 		cudnnTensorDescriptor_t cudnnDescA;
-		checkCudnnErr(cudnnCreateTensorDescriptor(&cudnnDescA));
+		checkCUDNN(cudnnCreateTensorDescriptor(&cudnnDescA));
 
 		cudnnTensorDescriptor_t cudnnDescB;
-		checkCudnnErr(cudnnCreateTensorDescriptor(&cudnnDescB));
+		checkCUDNN(cudnnCreateTensorDescriptor(&cudnnDescB));
 
 		cudnnTensorDescriptor_t cudnnDescC;
-		checkCudnnErr(cudnnCreateTensorDescriptor(&cudnnDescC));
+		checkCUDNN(cudnnCreateTensorDescriptor(&cudnnDescC));
 
 		//typedef enum {
 		//	CUDNN_DATA_FLOAT = 0,
@@ -382,15 +381,15 @@ public:
 			dataType = CUDNN_DATA_INT8;
 		};
 
-		checkCudnnErr(cudnnSetTensorNdDescriptor(cudnnDescA, dataType, A->x_dim_num, A->x_dim, A->x_stride));
-		checkCudnnErr(cudnnSetTensorNdDescriptor(cudnnDescB, dataType, B->x_dim_num, B->x_dim, B->x_stride));
-		checkCudnnErr(cudnnSetTensorNdDescriptor(cudnnDescC, dataType, C->x_dim_num, C->x_dim, C->x_stride));
+		checkCUDNN(cudnnSetTensorNdDescriptor(cudnnDescA, dataType, A->x_dim_num, A->x_dim, A->x_stride));
+		checkCUDNN(cudnnSetTensorNdDescriptor(cudnnDescB, dataType, B->x_dim_num, B->x_dim, B->x_stride));
+		checkCUDNN(cudnnSetTensorNdDescriptor(cudnnDescC, dataType, C->x_dim_num, C->x_dim, C->x_stride));
 		
 		cudnnOpTensorDescriptor_t optype;
-		checkCudnnErr(cudnnCreateOpTensorDescriptor(&optype));
-		cudnnSetOpTensorDescriptor(optype, cudnn_op_math, dataType, CUDNN_NOT_PROPAGATE_NAN);
+		checkCUDNN(cudnnCreateOpTensorDescriptor(&optype));
+		checkCUDNN(cudnnSetOpTensorDescriptor(optype, cudnn_op_math, dataType, CUDNN_NOT_PROPAGATE_NAN));
 		//C = op(alpha1[0] * A, alpha2[0] * B) + beta[0]*C
-		checkCudnnErr(cudnnOpTensor(
+		checkCUDNN(cudnnOpTensor(
 			handle_,
 			optype,
 			alpha1,
@@ -403,8 +402,8 @@ public:
 			cudnnDescC,
 			C->x));
 		
-		checkCudaErr(cudaDeviceSynchronize());
-	 clean:
+		checkCudaErrors(cudaDeviceSynchronize());
+	 //clean:
 	}
 
 	//init in cpu=0,init in gpu=1
@@ -483,8 +482,12 @@ public:
 		r->con_name = "constant_one";
 		r->device = this->device;
 		r->x_dim_num = this->x_dim_num;
-		r->x_stride = this->x_stride;
-		r->x_dim = this->x_dim;
+
+		r->x_dim = (int *)malloc(this->x_dim_num * sizeof(int));
+		r->x_stride = (int *)malloc(this->x_dim_num * sizeof(int));
+
+		memcpy(r->x_dim, this->x_dim, r->x_dim_num * sizeof(int));
+		memcpy(r->x_stride, this->x_stride, r->x_dim_num * sizeof(int));
 
 		int length = r->x_stride[0] * r->x_dim[0];
 		r->length = length;
@@ -500,9 +503,14 @@ public:
 		constant<T>* r = new constant<T>;
 		r->con_name = "constant_zero";
 		r->device = this->device;
+
 		r->x_dim_num = this->x_dim_num;
-		r->x_stride = this->x_stride;
-		r->x_dim = this->x_dim;
+
+		r->x_dim = (int *)malloc(this->x_dim_num * sizeof(int));
+		r->x_stride = (int *)malloc(this->x_dim_num * sizeof(int));
+
+		memcpy(r->x_dim, this->x_dim, r->x_dim_num * sizeof(int));
+		memcpy(r->x_stride, this->x_stride, r->x_dim_num * sizeof(int));
 
 		int length = r->x_stride[0] * r->x_dim[0];
 		r->length = length;
@@ -527,6 +535,7 @@ public:
 	}
 
 	void initPlaceholder(int x_dim_num_o, int *x_dim_o, T* x_src) {
+		this->x_dim_num = x_dim_num_o;
 		this->x_dim = (int *)malloc(this->x_dim_num * sizeof(int));
 		this->x_stride = (int *)malloc(this->x_dim_num * sizeof(int));
 		memcpy(this->x_dim, x_dim_o, this->x_dim_num * sizeof(int));

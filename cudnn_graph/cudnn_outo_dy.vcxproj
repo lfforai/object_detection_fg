@@ -17,6 +17,7 @@
     <ClInclude Include="convert.h" />
     <ClInclude Include="conv_op.cuh" />
     <ClInclude Include="cos_op.cuh" />
+    <ClInclude Include="cuda_rand.cuh" />
     <ClInclude Include="div_op.cuh" />
     <ClInclude Include="error_util.h" />
     <ClInclude Include="exp_op.cuh" />
@@ -94,7 +95,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>freeimage.lib;opencv_world410d.lib;python37_d.lib;cudnn.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>curand.lib;freeimage.lib;opencv_world410d.lib;python37_d.lib;cudnn.lib;cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\ProgramData\Anaconda3\libs;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v10.1\common\lib\x64;C:\Freeimage\linux\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>

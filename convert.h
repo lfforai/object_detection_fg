@@ -6,7 +6,7 @@
 // Also when one needs to use float instead of half, e.g. for printing
 template <typename T>
 struct ScaleFactorTypeMap { typedef T Type; };
-template <> struct ScaleFactorTypeMap<half1> { typedef float Type; }; //打印的时候half无法打印，需要转换为浮点数
+template <> struct ScaleFactorTypeMap<half1> { typedef float Type; };
 
 // float/double <-> half conversion class
 template <class value_type>
